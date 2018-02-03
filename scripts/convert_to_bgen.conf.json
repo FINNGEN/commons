@@ -1,0 +1,7 @@
+{
+  "convert_to_bgen.ofiletype": "bgen_v1.2",
+  "convert_to_bgen.input_rounding_error": "0.005",
+  "convert_to_bgen.files_to_conv": "/medpop/palotie/mkurki/finngen/conversion_pipe/data/convert_files",
+  "convert_to_bgen.precision": "8",
+  "convert_to_bgen.genofield": "GP"
+}
