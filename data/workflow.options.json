@@ -1,0 +1,7 @@
+{
+	"final_workflow_outputs_dir":"gs://mkurki/testconv",
+	"default_runtime_attributes": {
+		"docker":"us.gcr.io/team-boston/finngen_qctool_small:0.001"
+	}
+
+}
