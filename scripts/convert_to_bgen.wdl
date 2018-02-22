@@ -6,6 +6,7 @@ task convert_file {
 	Int precision
 	Float input_rounding_error
 
+
 	command {
 		qctool_v2.0-rc8 -g ${vcf} -vcf-genotype-field ${genofield}  -filetype vcf -og ${basename(vcf)}.bgen -bgen-compression zlib -ofiletype ${ofiletype} -precision ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
     bgenix -g ${basename(vcf)}.bgen -index
@@ -40,7 +41,8 @@ workflow convert_to_bgen {
 			genofield=genofield,
       		ofiletype=ofiletype,
       		precision=precision,
-      		input_rounding_error=input_rounding_error
+      		input_rounding_error=input_rounding_error,
+      		gc_zone=gc_zone
 		}
 	}
 }
