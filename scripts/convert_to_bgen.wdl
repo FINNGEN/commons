@@ -5,7 +5,7 @@ task convert_file {
 	String ofiletype
 	Int precision
 	Float input_rounding_error
-
+	Int local_disk
 
 	command {
 		qctool_v2.0-rc8 -g ${vcf} -vcf-genotype-field ${genofield}  -filetype vcf -og ${basename(vcf)}.bgen -bgen-compression zlib -ofiletype ${ofiletype} -precision ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
@@ -15,6 +15,7 @@ task convert_file {
 	runtime {
 			memory: "1G"
 			sge_queue: "broad"
+			disks: "local-disk ${local_disk} SSD"
 	}
 
 	output {
@@ -31,6 +32,9 @@ workflow convert_to_bgen {
 	Int precision=8
   	Float input_rounding_error=0.005
 
+  	## disk size in GB.
+  	Int local_disk = 50
+
 	Array[String] files = read_lines(files_to_conv)
 
 
@@ -42,7 +46,7 @@ workflow convert_to_bgen {
       		ofiletype=ofiletype,
       		precision=precision,
       		input_rounding_error=input_rounding_error,
-      		gc_zone=gc_zone
+      		local_disk=local_disk
 		}
 	}
 }

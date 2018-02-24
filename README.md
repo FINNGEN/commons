@@ -24,7 +24,7 @@ and add path to the configuration file to "convert_to_bgen.files_to_conv"
 Run WDL scripts/convert_to_bgen.wdl with scripts/convert_to_bgen.conf.json as inputs
 
 ```
-java -jar cromwell.jar -Dconfig.file=data/backends.conf run scripts/convert_to_bgen.wdl --inputs scripts/convert_to_bgen.conf.json --options data/workflow.options.json
+java -jar cromwell.jar -Dconfig.file=data/backend.conf run scripts/convert_to_bgen.wdl --inputs scripts/convert_to_bgen.json --options data/workflow.options.json
 ```
 
 ## Split bgen to chunks
