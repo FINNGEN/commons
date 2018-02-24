@@ -16,8 +16,8 @@ def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_
 
     index_cmd = ['tabix', inputfile, "{}:{}-{}".format(chr, start, end)]
 
-    qct_cmd = [QCTOOL, '-g -', '-vcf-genotype-field',' GP', '-filetype vcf', '-og', output, '-compression zlib',
-               '-ofiletype', ofiletype, '--input-rounding-error', "{}".format(rounding_error)  ]
+    qct_cmd = [QCTOOL, '-g -', '-vcf-genotype-field',' GP', '-filetype vcf', '-og', output, '-bgen-compression zlib',
+               '-ofiletype', ofiletype, '-bgen-input-rounding-error', "{}".format(rounding_error)  ]
 
     #print("running pipe: {} | {}".format( " ".join(index_cmd), " ".join(qct_cmd) ))
 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     if (args.inputfile.endswith("bgen")):
         conv_func = partial(run_chunk_bgen, inputfile=args.inputfile)
-    elif (args.inputfile.endswith("vcf.bgz") or args.inputfile.endswith("vcf.bg")):
+    elif (args.inputfile.endswith("vcf.bgz") or args.inputfile.endswith("vcf.bg") or args.inputfile.endswith("vcf.gz")):
         conv_func = partial(run_chunk_vcf,inputfile=args.inputfile, bits=args.bgenbits, ofiletype=args.bgentype, rounding_error=args.bgenrounderror)
     else:
         raise Exception("Unsupported inputfile")
