@@ -1,0 +1,7 @@
+{
+  "split_to_chunks.ncpu": "8",
+  "split_to_chunks.input_blocks": "data/split_single_chrom.txt",
+  "split_to_chunks.disksize": "50",
+  "split_to_chunks.memory": "2GB",
+  "split_to_chunks.filetype": "vcf"
+}

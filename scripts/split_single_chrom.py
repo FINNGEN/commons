@@ -12,21 +12,24 @@ import time
 QCTOOL="qctool_v2.0-rc8"
 OFILETYPE=""
 
-def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_error):
+def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_error, outbucket=None):
 
-    index_cmd = ['tabix', inputfile, "{}:{}-{}".format(chr, start, end)]
+    index_cmd = ['tabix', '-h',inputfile, "{}:{}-{}".format(chr, start, end)]
 
     qct_cmd = [QCTOOL, '-g -', '-vcf-genotype-field',' GP', '-filetype vcf', '-og', output, '-bgen-compression zlib',
-               '-ofiletype', ofiletype, '-bgen-input-rounding-error', "{}".format(rounding_error)  ]
+               '-ofiletype', ofiletype, 'bgen-permitted-input-rounding-error', "{}".format(rounding_error)  ]
 
     #print("running pipe: {} | {}".format( " ".join(index_cmd), " ".join(qct_cmd) ))
-
-    tab = sb.Popen(index_cmd,stdout=subprocess.PIPE)
-    tp2 = subprocess.Popen(qct_cmd, stdin=tab.stdout)
-    p2.communicate()
+    sb.check_call("{} | {}".format(" ".join(index_cmd), " ".join(qct_cmd) ) )
+    ## for some reason this safer piping version did not work....
+    #tab = sb.Popen(index_cmd,stdout=subprocess.PIPE, shell=True)
+    #tp2 = sb.Popen(qct_cmd, stdin=tab.stdout, shell=True)
+    #output = tp2.communicate()
+    delocalize(outbucket, output)
+    
     return 0
 
-def run_chunk_bgen(inputfile, chr, start, end, output):
+def run_chunk_bgen(inputfile, chr, start, end, output, outbucket=None):
 
     index_cmd = ['bgenix', '-g', '-incl-range', "{}:{}-{}".format(chr, start, end)]
 
@@ -36,7 +39,17 @@ def run_chunk_bgen(inputfile, chr, start, end, output):
         index_cmd = ['bgenix', '-g', '-incl-range', "{}:{}-{}".format(chr, start, stop)]
         sb.check_call(index_cmd, stdout=out)
 
+    delocalize(outbucket, output)
+
     return 0
+
+
+def delocalize(bucket, file):
+    if( bucket is not None):
+        sb.check_call("gsutil cp {} {}".format( file, bucket)  )
+
+
+
 
 if __name__ == '__main__':
 
@@ -45,6 +58,9 @@ if __name__ == '__main__':
     parser.add_argument('inputfile', action='store', type=str,
                         help='vcf or bgen file to splot')
     parser.add_argument('chunks', action='store', type=str,
+                        help='chunks as chr start stop')
+
+    parser.add_argument('outputbucket', action='store', type=str,
                         help='chunks as chr start stop')
 
     parser.add_argument('-nthreads', action='store', type=int,
@@ -67,10 +83,8 @@ if __name__ == '__main__':
     else:
         ncpus = multiprocessing.cpu_count() - 1
 
-
     print("Running with {} cpus".format(ncpus) )
     threadpool = Pool(processes=ncpus )
-
     conv_func = None
 
     if (args.inputfile.endswith("bgen")):

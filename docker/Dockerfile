@@ -8,7 +8,8 @@ tar -xvjf htslib-1.7.tar.bz2 && cd htslib-1.7 && ./configure && make && make ins
 hg clone -b beta https://gavinband@bitbucket.org/gavinband/qctool && \
 cd qctool && ./waf-1.5.18 configure && ./waf-1.5.18 && \
 hg clone https://bitbucket.org/gavinband/bgen && \
-cd bgen && ./waf-1.8.13 configure && ./waf-1.8.13 &&
+cd bgen && ./waf-1.8.13 configure && ./waf-1.8.13 && \
+mkdir -p /root/.ssh/ && \
 echo "${SSH_PRIVATE_KEY}" >> /root/.ssh/id_rsa && chmod 600 /root/.ssh/id_rsa  && \
 git clone git clone git@github.com:FINNGEN/CONVERT_AND_SPLIT_VCF.git
 

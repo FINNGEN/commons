@@ -1,0 +1,1 @@
+gs://finngen_refinery_eu/R1_bgen/data/release1_infofiltered_chr9.vcf.gz	data/chr9_splits
