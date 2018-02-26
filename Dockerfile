@@ -12,7 +12,7 @@ cd bgen && ./waf-1.8.13 configure --prefix=/usr/local/ && ./waf-1.8.13 install
 
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get install curl python liblzma-dev zlib1g-dev libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes 
+RUN apt-get update && apt-get install curl libcurl4-openssl-dev python liblzma-dev zlib1g-dev libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes 
 COPY --from=0 /usr/local/bin/bgenix /usr/local/bin 
 COPY --from=0 /usr/local/bin/cat-bgen /usr/local/bin
 COPY --from=0 /usr/local/bin/qctool_v2.0-rc8 /usr/local/bin
