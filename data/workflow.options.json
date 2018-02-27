@@ -1,7 +1,7 @@
 {
-	"final_workflow_outputs_dir":"gs://mkurki/testconv",
+	"final_workflow_outputs_dir":"gs://finngen_refinery_eu/R1_bgen/data/",
 	"default_runtime_attributes": {
-	"docker":"us.gcr.io/team-boston/finngen_qctool_small:0.001",
+	"docker":"eu.gcr.io/team-boston/conv_dock:0.002",
 	"zones": "europe-west1-b"
 	}
 

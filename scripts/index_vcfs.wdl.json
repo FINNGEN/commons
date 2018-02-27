@@ -1,0 +1,4 @@
+{
+  "index_vcf.disksize": "(optional) Int",
+  "index_vcf.filelist": "File"
+}

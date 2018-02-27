@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import argparse
 
 from multiprocessing import Pool, TimeoutError
@@ -17,7 +17,7 @@ def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_
     index_cmd = ['tabix', '-h',inputfile, "{}:{}-{}".format(chr, start, end)]
 
     qct_cmd = [QCTOOL, '-g -', '-vcf-genotype-field',' GP', '-filetype vcf', '-og', output, '-bgen-compression zlib',
-               '-ofiletype', ofiletype, 'bgen-permitted-input-rounding-error', "{}".format(rounding_error)  ]
+               '-ofiletype', ofiletype, '-bgen-permitted-input-rounding-error', "{}".format(rounding_error)  ]
 
     #print("running pipe: {} | {}".format( " ".join(index_cmd), " ".join(qct_cmd) ))
     sb.check_call("{} | {}".format(" ".join(index_cmd), " ".join(qct_cmd) ) )
@@ -26,7 +26,7 @@ def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_
     #tp2 = sb.Popen(qct_cmd, stdin=tab.stdout, shell=True)
     #output = tp2.communicate()
     delocalize(outbucket, output)
-    
+
     return 0
 
 def run_chunk_bgen(inputfile, chr, start, end, output, outbucket=None):
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     parser.add_argument('chunks', action='store', type=str,
                         help='chunks as chr start stop')
 
-    parser.add_argument('outputbucket', action='store', type=str,
+    parser.add_argument('-outputbucket', action='store', type=str,
                         help='chunks as chr start stop')
 
     parser.add_argument('-nthreads', action='store', type=int,
@@ -107,9 +107,11 @@ if __name__ == '__main__':
 
     with open( args.chunks, 'r') as chunks:
         for line in chunks:
-            dat = line.rstrip("\n").split()
-            outfile= "{}_{}_{}_{}.bgen".format(args.inputfile, dat[0], dat[1], dat[2] )
-            threadpool.apply_async( partial(conv_func, chr=dat[0], start=dat[1], end=dat[2], output=outfile), callback=progress )
+            dat = line.rstrip("\n").split(":")
+            pos = dat[1].split("-")
+            outfile = "{}_{}_{}_{}.bgen".format(args.inputfile, dat[0], pos[0], pos[1])
+            threadpool.apply_async(partial(conv_func, chr=dat[0], start=pos[0], end=pos[1], output=outfile),
+                                   callback=progress)
 
     threadpool.close()
     threadpool.join()
