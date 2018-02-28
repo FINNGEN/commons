@@ -11,11 +11,11 @@ hg clone https://bitbucket.org/gavinband/bgen && \
 cd bgen && ./waf-1.8.13 configure && ./waf-1.8.13
 
 FROM ubuntu:16.04
-RUN apt-get update && apt-get install curl libcurl4-openssl-dev python liblzma-dev zlib1g-dev libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes 
-COPY --from=0 /usr/local/bin/bgenix /usr/local/bin 
+RUN apt-get update && apt-get install curl libcurl4-openssl-dev python liblzma-dev zlib1g-dev libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes
+COPY --from=0 /usr/local/bin/bgenix /usr/local/bin
 COPY --from=0 /usr/local/bin/cat-bgen /usr/local/bin
 COPY --from=0 /usr/local/bin/qctool_v2.0-rc8 /usr/local/bin
-COPY --from=0 /usr/local/bin/tabix /usr/local/bin 
+COPY --from=0 /usr/local/bin/tabix /usr/local/bin
 COPY --from=0 /usr/local/bin/bgzip /usr/local/bin/
 COPY --from=0 /usr/local/bin/htsfile /usr/local/bin
 COPY --from=0 split_single_chrom.py /usr/local/bin

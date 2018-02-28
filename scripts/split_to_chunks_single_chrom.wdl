@@ -1,7 +1,6 @@
 
 task split_chunk {
 	File infile
-	## index file is not used but is specified here so that it gets localized.
 	File indexfile
 	File splitfile
 
@@ -20,7 +19,7 @@ task split_chunk {
   }
 
 	output {
-		Array[File] outchunks=glob("*_*_*_*.bgen")
+		Array[File] outchunks=glob("*.bgen")
 	}
 
 }

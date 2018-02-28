@@ -28,7 +28,6 @@ if __name__ == '__main__':
     fileconf = dict(map( lambda x: (x[0].lstrip("chr_").upper(),x[1]), chr_files ))
     chr_prefix ="chr"
 
-    print(fileconf)
     if( args.build37 ):
         chr_prefix =""
 
@@ -79,7 +78,7 @@ if __name__ == '__main__':
         if args.splitype == "all_sep":
             out.write("\t".join([fileconf[last_line[0]], chr_prefix + last_line[0], last_line[1], CHR_MAX_SIZE]) + "\n")
         else:
-            ranges.append( chr_prefix +prev_chr + ":" + start + "-" + stop )
+            ranges.append( chr_prefix + last_line[0].upper() + ":" + last_line[1] + "-" + CHR_MAX_SIZE )
             out.write( fileconf[last_line[0]] + "\t" +",".join(ranges) + "\n")
 
 

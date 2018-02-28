@@ -8,7 +8,7 @@ import multiprocessing
 import subprocess as sb
 from functools import partial
 import time
-
+import os
 QCTOOL="qctool_v2.0-rc8"
 OFILETYPE=""
 
@@ -19,8 +19,8 @@ def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_
     qct_cmd = [QCTOOL, '-g -', '-vcf-genotype-field',' GP', '-filetype vcf', '-og', output, '-bgen-compression zlib',
                '-ofiletype', ofiletype, '-bgen-permitted-input-rounding-error', "{}".format(rounding_error)  ]
 
-    #print("running pipe: {} | {}".format( " ".join(index_cmd), " ".join(qct_cmd) ))
-    sb.check_call("{} | {}".format(" ".join(index_cmd), " ".join(qct_cmd) ) )
+    print("running pipe: {} | {}".format( " ".join(index_cmd), " ".join(qct_cmd) ))
+    sb.check_call("{} | {}".format(" ".join(index_cmd), " ".join(qct_cmd) ), shell=True )
     ## for some reason this safer piping version did not work....
     #tab = sb.Popen(index_cmd,stdout=subprocess.PIPE, shell=True)
     #tp2 = sb.Popen(qct_cmd, stdin=tab.stdout, shell=True)
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         for line in chunks:
             dat = line.rstrip("\n").split(":")
             pos = dat[1].split("-")
-            outfile = "{}_{}_{}_{}.bgen".format(args.inputfile, dat[0], pos[0], pos[1])
+            outfile = "{}_{}_{}_{}.bgen".format( os.path.basename(args.inputfile), dat[0], pos[0], pos[1])
             threadpool.apply_async(partial(conv_func, chr=dat[0], start=pos[0], end=pos[1], output=outfile),
                                    callback=progress)
 
