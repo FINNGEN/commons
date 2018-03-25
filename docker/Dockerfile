@@ -4,16 +4,21 @@ RUN apt-get update && apt-get install mercurial --yes && \
 apt-get install gcc zlib1g-dev wget make libcurl4-openssl-dev libbz2-dev liblzma-dev \
 bzip2 curl python make gcc g++ libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes && \
 wget https://github.com/samtools/htslib/releases/download/1.7/htslib-1.7.tar.bz2 && \
-tar -xvjf htslib-1.7.tar.bz2 && cd htslib-1.7 && ./configure && make && make install && \
+tar -xvjf htslib-1.7.tar.bz2 && cd htslib-1.7 && ./configure && make && make install && cd .. && \
 hg clone -b beta https://gavinband@bitbucket.org/gavinband/qctool && \
-cd qctool && ./waf-1.5.18 configure && ./waf-1.5.18 && \
+cd qctool && ./waf-1.5.18 configure && ./waf-1.5.18 && cd ..  && \
 hg clone https://bitbucket.org/gavinband/bgen && \
-cd bgen && ./waf-1.8.13 configure && ./waf-1.8.13
+cd bgen && ./waf configure && ./waf && \
+wget https://github.com/samtools/bcftools/releases/download/1.7/bcftools-1.7.tar.bz2 && tar -xvjf bcftools-1.7.tar.bz2 && cd bcftools-1.7 && \
+./configure && make && make install
 
 FROM ubuntu:16.04
-RUN apt-get update && apt-get install curl python liblzma-dev zlib1g-dev libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes
-COPY --from=0 /bgen/build/apps/* /usr/local/bin
-COPY --from=0 /qctool/build/release/qctool_v2.0-rc8 /usr/local/bin
-COPY --from=0 /qctool/build/release/tabix /usr/local/bin && COPY --from=0 /qctool/build/release/bgzip /usr/local/bin/
-COPY --from=0 /qctool/build/release/htsfile /usr/local/bin
-COPY --from=0 split_single_chrom.py /usr/local/bin
+RUN apt-get update && apt-get install curl libcurl4-openssl-dev python liblzma-dev zlib1g-dev libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes
+COPY --from=0 /usr/local/bin/tabix /usr/local/bin/
+COPY --from=0 /usr/local/bin/bgzip /usr/local/bin/
+COPY --from=0 /usr/local/bin/htsfile /usr/local/bin/
+COPY --from=0 /usr/local/bin/bcftools /usr/local/bin/
+COPY --from=0 split_single_chrom.py /usr/local/bin/
+COPY --from=0 /qctool/build/release/qctool_v2.0-rc9 /usr/local/bin/qctool
+COPY --from=0 /bgen/build/apps/bgenix /usr/local/bin/
+COPY --from=0 /bgen/build/apps/cat-bgen /usr/local/bin/

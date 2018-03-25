@@ -8,7 +8,7 @@ task convert_file {
 	Int local_disk
 
 	command {
-		qctool_v2.0-rc8 -g ${vcf} -vcf-genotype-field ${genofield}  -filetype vcf -og ${basename(vcf)}.bgen -bgen-compression zlib -ofiletype ${ofiletype} -precision ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
+		qctool -g ${vcf} -vcf-genotype-field ${genofield}  -filetype vcf -og ${basename(vcf)}.bgen -bgen-compression zlib -ofiletype ${ofiletype} -precision ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
     bgenix -g ${basename(vcf)}.bgen -index
 	}
 

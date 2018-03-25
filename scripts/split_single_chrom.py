@@ -9,7 +9,7 @@ import subprocess as sb
 from functools import partial
 import time
 import os
-QCTOOL="qctool_v2.0-rc8"
+QCTOOL="qctool"
 OFILETYPE=""
 
 def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_error, outbucket=None):

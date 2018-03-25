@@ -14,8 +14,8 @@ task split_chunk {
 
   runtime {
     memory: "${memory}"
-	cpu: "${ncpu}"
-	disks: "local-disk ${disksize} SSD"
+	  cpu: "${ncpu}"
+	  disks: "local-disk ${disksize} SSD"
   }
 
 	output {
@@ -29,7 +29,7 @@ task split_ranges {
 	String splits
 
 	command {
-			echo '${splits}' | tr ',' '\n' > splitfile
+		echo '${splits}' | tr ',' '\n' > splitfile
 	}
 
 	output {
