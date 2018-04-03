@@ -1,3 +1,17 @@
+<!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
+
+- [Pipelines for FINNGEN data munging](#pipelines-for-finngen-data-munging)
+	- [Pre-requirements](#pre-requirements)
+	- [Scrape info from release VCF files workflow](#scrape-info-from-release-vcf-files-workflow)
+		- [Copying files to end bucket in Google cloud](#copying-files-to-end-bucket-in-google-cloud)
+	- [Convert to bgen WORKFLOW](#convert-to-bgen-workflow)
+	- [Split bgen/vcf to chunks WORKFLOW](#split-bgenvcf-to-chunks-workflow)
+		- [splitting by parallelizing by chunk.](#splitting-by-parallelizing-by-chunk)
+			- [Run splitting](#run-splitting)
+		- [splitting by parallelizing by multiple chunks (e.g. all chunks in chromosomes).](#splitting-by-parallelizing-by-multiple-chunks-eg-all-chunks-in-chromosomes)
+	- [Copying files to end bucket in Google cloud](#copying-files-to-end-bucket-in-google-cloud)
+
+<!-- /TOC -->
 
 
 # Pipelines for FINNGEN data munging
@@ -16,7 +30,7 @@ To enable docker edit options data/workflow.options.json to include wanted docke
 data/backends.conf gives reasonable defaults for running locally/SGE/google cloud. Modify default backend to use on or the other.
 
 
-## scrape info from release VCF files
+## Scrape info from release VCF files workflow
 
 Pipeline for scraping all info fields from released VCF files and joining with external annotation.
 Prepare configuration file by editing scripts/scrape.annot.wdl.json:
@@ -42,7 +56,7 @@ After successful execution of the pipeline copy all files to desired bucket. Loc
 
 
 
-## Convert to bgen
+## Convert to bgen WORKFLOW
 Prepare a configuration file where each line is a full path to a file to be converted.
 
 Edit scripts/convert_to_bgen.conf.json
@@ -54,7 +68,7 @@ Run WDL scripts/convert_to_bgen.wdl with scripts/convert_to_bgen.conf.json as in
 java -Dconfig.file=data/backend.conf -jar cromwell.jar  run scripts/convert_to_bgen.wdl --inputs scripts/convert_to_bgen.json --options data/workflow.options.json
 ```
 
-## Split bgen/vcf to chunks
+## Split bgen/vcf to chunks WORKFLOW
 Edit or prepare configuration file like data/files.conf to include full path to each chromosome bgen/vcf file. You can add arbitrary chr names given after "chr_" but they must match the chromosomes given in the split files.
 
 ### splitting by parallelizing by chunk.
