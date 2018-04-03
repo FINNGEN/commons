@@ -1,19 +1,46 @@
-# CONVERT_AND_SPLIT_VCF
 
-Convert vcf to bgen and split to chunks
+
+# Pipelines for FINNGEN data munging
 
 ## Pre-requirements
 
-These tools are needed for running the conversions
-qctool_rc8 (tested on commit 76dbb1f of beta branch)
-bgenix (Tested on 14d4b62 commit on master branch)
+See docker/Dockerfile for instructions on building required tools if not using Docker.
 
-See docker/Dockerfile for instructions on building bgenix and qctool if not using Docker.
-us.gcr.io/team-boston/finngen_qctool_small:0.001 docker available with tested builds.
+Check latest available pre-built images
+eu.gcr.io/team-boston/finngen_qctool_small:0.01
+us.gcr.io/team-boston/finngen_qctool_small:0.01
+eu.gcr.io/finngen-refinery-dev/finngen_qctool_small:0.01
 
 To enable docker edit options data/workflow.options.json to include wanted docker image and provide the file as -options to cromwell. Remove/edit the output location as seen fit.
 
 data/backends.conf gives reasonable defaults for running locally/SGE/google cloud. Modify default backend to use on or the other.
+
+
+## scrape info from release VCF files
+
+Pipeline for scraping all info fields from released VCF files and joining with external annotation.
+Prepare configuration file by editing scripts/scrape.annot.wdl.json:
+```
+  "scrape_annots.vcfs": "gs://r1_data/r1_files_to_scrape" # vcf files in chromosomal order
+  "scrape_annots.cpu": "2", how many cpus to use per node.
+  "scrape_annots.memory": "8G", # how much memory to use per node
+  "scrape_annots.external_annot": "gs://r1_data/R1_variant_annotation.tsv", ## optional external annotation. FIRST column MUST be called "variant" containing variant id in CHR:POS:REF:ALT format
+  "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.01" # which docker to use
+```
+
+**IMPORTANT: Give the files in chromosomal order as the chunks are joined to a single file in given order.**
+
+Run scripts/scrape_annot.wdl with the prepared configuration file
+
+### Copying files to end bucket in Google cloud
+
+After successful execution of the pipeline copy all files to desired bucket. Locate the [cromwell job id] and [cromwell output bucket] from Cromwell server or standalone output.
+
+```
+  gsutil -m cp gs://[cromwell output bucket]/scrape_annot/[cromwell job id]/call-join_annot/**/*.gz* [destination bucket]
+```
+
+
 
 ## Convert to bgen
 Prepare a configuration file where each line is a full path to a file to be converted.
