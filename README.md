@@ -71,7 +71,7 @@ java -Dconfig.file=data/backend.conf -jar cromwell.jar  run scripts/convert_to_b
 ## Split bgen/vcf to chunks WORKFLOW
 Edit or prepare configuration file like data/files.conf to include full path to each chromosome bgen/vcf file. You can add arbitrary chr names given after "chr_" but they must match the chromosomes given in the split files.
 
-### splitting by parallelizing by chunk.
+### splitting by parallelizing by chunk WORKFLOW
 Prepare a configuration file for bgen splitting using the previous file config and pre-calculated chunk points (github.com/FINNGEN/chrsplit). Provided helper script example writes configuration of 5k variant chunks to data/splitting.conf.
 
 If making configuration file by hand make sure that the file is tab separated and not whitespace. By Default in finngen we want to have to sets of chunks. 1) chunks for gene based analysis (not splitting boundaries) and 2) chunks for single variants with more balanced chunk sizes. You run the configuration file generation for both files and concatenate them:
@@ -94,7 +94,7 @@ java -Dconfig.file=data/backend.conf -jar cromwell.jar  run scripts/split_to_chu
 ```
 
 
-### splitting by parallelizing by multiple chunks (e.g. all chunks in chromosomes).
+### Splitting by parallelizing by multiple chunks (e.g. all chunks in chromosomes) WORKFLOW
 
 More efficient chunking can be achieved by first parallelizing to high cpu compute nodes per chromosome and then parallelizing the individual chunks within the node. Add a --splitype switch to generate configuration for this type of analysis
 

@@ -11,17 +11,17 @@ task split_chunk {
 	String memory
 
 	command {
-	    bgenix -g ${bgen} -incl-range ${chr}:${start}-${stop} > ${basename(bgen)}_${chr}_${start}_${stop}.bgen;
+	  bgenix -g ${bgen} -incl-range ${chr}:${start}-${stop} > ${basename(bgen)}_${chr}_${start}_${stop}.bgen;
 		bgenix -g ${basename(bgen)}_${chr}_${start}_${stop}.bgen -index
 	}
 
 	runtime {
-	    memory: "${memory}"
+	  memory: "${memory}"
 		sge_queue: "${sge_queue}"
 	}
 
 	output {
-		File outchunk="${basename(bgen)}_${chr}_${start}_${stop}.bgen"
+    File outchunk="${basename(bgen)}_${chr}_${start}_${stop}.bgen"
 		File outchunkindex="${basename(bgen)}_${chr}_${start}_${stop}.bgen.bgi"
 	}
 
@@ -34,17 +34,17 @@ task split_chunk_vcf {
 	## index file is not used but is specified here so that it gets localized.
 	File indexfile
 	String chr
-  	Int start
-  	Int stop
+  Int start
+  Int stop
 
 	String? sge_queue
 	String memory
 
 	command {
-	    qctool -g ${vcf} -vcf-genotype-field ${genofield}  -filetype vcf -og ${basename(vcf)}.bgen -bgen-compression zlib -ofiletype ${ofiletype} -precision ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
+	  qctool -g ${vcf} -vcf-genotype-field ${genofield}  -filetype vcf -og ${basename(vcf)}.bgen -bgen-compression zlib -ofiletype ${ofiletype} -precision ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
 		bgenix -g ${basename(vcf)}.bgen -index
 
-	    bgenix -g ${bgen} -incl-range ${chr}:${start}-${stop} > ${basename(bgen)}_${chr}_${start}_${stop}.bgen;
+	  bgenix -g ${bgen} -incl-range ${chr}:${start}-${stop} > ${basename(bgen)}_${chr}_${start}_${stop}.bgen;
 		bgenix -g ${basename(bgen)}_${chr}_${start}_${stop}.bgen -index
 	}
 
@@ -75,7 +75,7 @@ workflow split_to_chunks {
 			indexfile = split[0]+".bgi",
 			chr=split[1],
 			start=split[2],
-      		stop=split[3],
+      stop=split[3],
 			sge_queue=sge_queue,
 			memory=memory
 		}

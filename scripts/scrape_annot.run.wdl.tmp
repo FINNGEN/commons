@@ -1,0 +1,7 @@
+{
+  "scrape_annots.vcfs": "files_to_scrape",
+  "scrape_annots.cpu": "2",
+  "scrape_annots.memory": "8G",
+  "scrape_annots.external_annot": "R1_variant_annotation.tsv",
+  "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.01"
+}

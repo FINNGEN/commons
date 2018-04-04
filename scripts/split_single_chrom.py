@@ -17,11 +17,11 @@ def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_
     index_cmd = ['tabix', '-h',inputfile, "{}:{}-{}".format(chr, start, end)]
 
     qct_cmd = [QCTOOL, '-g -', '-vcf-genotype-field',' GP', '-filetype vcf', '-og', output, '-bgen-compression zlib',
-               '-ofiletype', ofiletype, '-bgen-permitted-input-rounding-error', "{}".format(rounding_error)  ]
+               '-ofiletype', ofiletype, '-bgen-permitted-input-rounding-error', "{}".format(rounding_error), "-bgen-bits", "{}".format(bits)  ]
 
     print("running pipe: {} | {}".format( " ".join(index_cmd), " ".join(qct_cmd) ))
     sb.check_call("{} | {}".format(" ".join(index_cmd), " ".join(qct_cmd) ), shell=True )
-    ## for some reason this safer piping version did not work....
+    ## for some reason this safer piping version did not work.... Safety not a concern here though
     #tab = sb.Popen(index_cmd,stdout=subprocess.PIPE, shell=True)
     #tp2 = sb.Popen(qct_cmd, stdin=tab.stdout, shell=True)
     #output = tp2.communicate()
@@ -31,24 +31,20 @@ def run_chunk_vcf(inputfile, chr, start, end, output, bits, ofiletype, rounding_
 
 def run_chunk_bgen(inputfile, chr, start, end, output, outbucket=None):
 
-    index_cmd = ['bgenix', '-g', '-incl-range', "{}:{}-{}".format(chr, start, end)]
+    index_cmd = ['bgenix', '-g', inputfile , '-incl-range', "{}:{}-{}".format(chr, start, end)]
 
     print("running command {}".format(index_cmd) )
 
     with open(output, 'w') as out:
-        index_cmd = ['bgenix', '-g', '-incl-range', "{}:{}-{}".format(chr, start, stop)]
         sb.check_call(index_cmd, stdout=out)
 
     delocalize(outbucket, output)
 
     return 0
 
-
 def delocalize(bucket, file):
     if( bucket is not None):
         sb.check_call("gsutil cp {} {}".format( file, bucket)  )
-
-
 
 
 if __name__ == '__main__':
@@ -56,24 +52,24 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="split a chromosome to predefined bgen chunks")
 
     parser.add_argument('inputfile', action='store', type=str,
-                        help='vcf or bgen file to splot')
+                        help='vcf or bgen file to split')
     parser.add_argument('chunks', action='store', type=str,
                         help='chunks as chr start stop')
 
     parser.add_argument('-outputbucket', action='store', type=str,
-                        help='chunks as chr start stop')
+                        help='name of output bucket')
 
     parser.add_argument('-nthreads', action='store', type=int,
                         help='how many threads to run.')
 
     parser.add_argument('-bgentype', default="bgen_v1.2", action='store', type=str,
-                            help='how many threads to run.')
+                            help='bgen version')
 
     parser.add_argument('-bgenbits', default=8, action='store', type=int,
-                        help='how many threads to run.')
+                        help='How many bits to use to store dosage')
 
     parser.add_argument('-bgenrounderror', default=0.005, action='store', type=float,
-                        help='how many threads to run.')
+                        help='Allowed rounding error when converting genotype probabilities to dosage')
 
     args = parser.parse_args()
 

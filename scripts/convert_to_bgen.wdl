@@ -13,9 +13,9 @@ task convert_file {
 	}
 
 	runtime {
-			memory: "1G"
-			sge_queue: "broad"
-			disks: "local-disk ${local_disk} SSD"
+		memory: "1G"
+		sge_queue: "broad"
+		disks: "local-disk ${local_disk} SSD"
 	}
 
 	output {
@@ -30,23 +30,21 @@ workflow convert_to_bgen {
 	String genofield ="GP"
 	String ofiletype="bgen_v1.2"
 	Int precision=8
-  	Float input_rounding_error=0.005
-
-  	## disk size in GB.
-  	Int local_disk = 50
+  Float input_rounding_error=0.005
+  ## disk size in GB.
+  Int local_disk = 50
 
 	Array[String] files = read_lines(files_to_conv)
-
 
 	scatter( file in files) {
 
 		call convert_file {
 			input: vcf=file,
 			genofield=genofield,
-      		ofiletype=ofiletype,
-      		precision=precision,
-      		input_rounding_error=input_rounding_error,
-      		local_disk=local_disk
+      ofiletype=ofiletype,
+      precision=precision,
+      input_rounding_error=input_rounding_error,
+      local_disk=local_disk
 		}
 	}
 }
