@@ -5,8 +5,8 @@ task join_annot {
 	File header
 	File? external_annot
 	Int local_disk=500
-  String docker
-  String? outputfile
+  	String docker
+  	String? outputfile
 
 	runtime {
 		docker: "${docker}"
@@ -26,10 +26,10 @@ task join_annot {
 			tabix -b 3 -e 3 -s 2 annotated_variants.gz
 		fi
     
-    if [[ -n "${outputfile}" ]]; then
-      gsutil cp annotated_variants.gz ${outputfile}
-      gsutil cp annotated_variants.gz.tbi ${outputfile}".tbi"
-    fi
+	    if [[ -n "${outputfile}" ]]; then
+	      gsutil cp annotated_variants.gz ${outputfile}
+	      gsutil cp annotated_variants.gz.tbi ${outputfile}".tbi"
+	    fi
 
 	>>> 
   
@@ -46,7 +46,7 @@ task join_annot {
 task extract {
 	File vcf
 	Int local_disk=100
-  String docker
+  	String docker
 
 	runtime {
 		docker: "${docker}"
@@ -57,12 +57,10 @@ task extract {
 	
 	command <<<
 		#set -o pipefail
-
-    zcat ${vcf} | cut -f 1-8 | gawk 'BEGIN{ FS="\t"; OFS="\t"; header=0} $1!~/^#/{ delete out; delete names; elems=split($8,a,";"); for(i=1;i<=elems;i++) { split(a[i],b,"="); out[b[1]]=b[2]; names[i]=b[1] }; asorti(out,outdest); s=out[outdest[1]];h=outdest[1]; for(ind=2;ind<=elems; ind++) { h=h"\t"outdest[ind];  s=s"\t"out[outdest[ind]] }; if(NR==1) print "variant","chr","pos","ref","alt",h; print $1":"$2":"$4":"$5,$1,$2,$3,$4,s   }' | bgzip > ${basename(vcf)}.annot.gz
-    zcat ${vcf} | grep -v "^#"  | head -n 1 > first
-
-	  gawk ' BEGIN{ FS="\t"; OFS="\t"; header=0} { delete out; delete names; elems=split($8,a,";"); for(i=1;i<=elems;i++) { split(a[i],b,"="); out[b[1]]=b[2]; names[i]=b[1] }; asorti(out,outdest); s=out[outdest[1]];h=outdest[1]; for(ind=2;ind<=elems; ind++) { h=h"\t"outdest[ind];  s=s"\t"out[outdest[ind]] }; if(NR==1) print "variant","chr","pos","ref","alt",h;} ' first > ${basename(vcf)}.annot.header
-    echo "Done converting"
+    	zcat ${vcf} | cut -f 1-8 | gawk 'BEGIN{ FS="\t"; OFS="\t"; header=0} $1!~/^#/{ delete out; delete names; elems=split($8,a,";"); for(i=1;i<=elems;i++) { split(a[i],b,"="); out[b[1]]=b[2]; names[i]=b[1] }; asorti(out,outdest); s=out[outdest[1]];h=outdest[1]; for(ind=2;ind<=elems; ind++) { h=h"\t"outdest[ind];  s=s"\t"out[outdest[ind]] }; print $1":"$2":"$4":"$5,$1,$2,$4,$5,s   }' | bgzip > ${basename(vcf)}.annot.gz
+    	zcat ${vcf} | grep -v "^#"  | head -n 1 > first
+		gawk ' BEGIN{ FS="\t"; OFS="\t"; header=0} { delete out; delete names; elems=split($8,a,";"); for(i=1;i<=elems;i++) { split(a[i],b,"="); out[b[1]]=b[2]; names[i]=b[1] }; asorti(out,outdest); s=out[outdest[1]];h=outdest[1]; for(ind=2;ind<=elems; ind++) { h=h"\t"outdest[ind];  s=s"\t"out[outdest[ind]] }; if(NR==1) print "variant","chr","pos","ref","alt",h;} ' first > ${basename(vcf)}.annot.header
+    	echo "Done converting"
 	>>>
 
 	output {
@@ -91,7 +89,7 @@ workflow scrape_annots {
 	scatter(file in files) {
 		call extract {
 			input: vcf=file,
-      docker=docker
+      		docker=docker
 		}
 	}
 
@@ -99,8 +97,8 @@ workflow scrape_annots {
 		input: files=extract.out,
 		header=extract.header[0],
 		external_annot=external_annot,
-    docker=docker
-    outputfile=outputfile
+    	docker=docker,
+    	outputfile=outputfile
 	}
 
 }
