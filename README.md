@@ -102,7 +102,7 @@ More efficient chunking can be achieved by first parallelizing to high cpu compu
 scripts/generate_chunk_conf.py data/files.conf data/chrpos_additional_split_5k_chunks.txt splitting_variant_based.conf --splitype by_chrom
 ```
 
-Run wdl scripts/split_to_chunks_single_chrom.wdl using scripts/split_to_chunks_single_chrom.wdl as an input and using optional configurations. Provided docker file in workflow options contains all the necessary tools.
+Run wdl scripts/split_to_chunks_single_chrom.wdl using scripts/split_to_chunks_single_chrom.wdl.json as an input and using optional configurations. Provided docker file in workflow options contains all the necessary tools.
 
 ```
 java -Dconfig.file=data/backend.conf -jar cromwell.jar  run scripts/split_to_chunks_single_chrom.wdl --inputs scripts/split_to_chunks_single_chrom.wdl --options data/workflow.options.json
