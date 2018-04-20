@@ -22,7 +22,7 @@ task join_annot {
 			tabix -S 1 -b 2 -e 2 -s 1 annotated_variants.gz
 		else
 			n_join1=$(( `zcat ${files[0]} | head -n 1 | awk 'BEGIN{ FS="\t"} { print NF};'` + `head -n 1 "${external_annot}" | awk 'BEGIN{ FS="\t"} { print NF-1};'`))
-			join -a 1 -t $'\t' -1 2 -2 1 <(cat <(head -n 1 ${header} | awk '{ print "#"$0}' ) <(zcat ${sep=" " files}) | nl -nln | sort -b -k 2,2 ) <( sort -b -k 1,1 "${external_annot}" ) | sort -g -k 2,2 | cut -f 1,3- | awk -v nf=$n_join1 'BEGIN{ FS="\t";OFS="\t"} { printf $0; if(NF<nf) { for(i=NF+1;i<=nf;i++) { printf "\tNA"  };  } printf "\n" }' | bgzip > annotated_variants.gz			
+			join -a 1 -t $'\t' -1 2 -2 1 <(cat <(head -n 1 ${header} | awk '{ print "#"$0}' ) <(zcat ${sep=" " files}) | nl -nln | sort -b -k 2,2 ) <( awk 'BEGIN{ FS="\t"} NR==1{ print "#"$0  } NR>1{ print $0}' "${external_annot}" | sort -b -k 1,1  ) | sort -g -k 2,2 | cut -f 1,3- | awk -v nf=$n_join1 'BEGIN{ FS="\t";OFS="\t"} { printf $0; if(NF<nf) { for(i=NF+1;i<=nf;i++) { printf "\tNA"  };  } printf "\n" }' | bgzip > annotated_variants.gz			
 			tabix -b 3 -e 3 -s 2 annotated_variants.gz
 		fi
     
