@@ -21,9 +21,8 @@
 See docker/Dockerfile for instructions on building required tools if not using Docker.
 
 Check latest available pre-built images
-eu.gcr.io/team-boston/finngen_qctool_small:0.01
-us.gcr.io/team-boston/finngen_qctool_small:0.01
-eu.gcr.io/finngen-refinery-dev/finngen_qctool_small:0.01
+eu.gcr.io/finngen-refinery-dev/conv_dock:0.008
+eu.gcr.io/finngen-refinery-dev/conv_dock:0.008
 
 To enable docker edit options data/workflow.options.json to include wanted docker image and provide the file as -options to cromwell. Remove/edit the output location as seen fit.
 
