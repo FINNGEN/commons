@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
             items = map(lambda x: x["ID"], fields )
 
-            out.write( "variant\tchr\tpos" + "\t".join(items) + "\n" )
+            out.write( "variant\tchr\tpos\t" + "\t".join(items) + "\n" )
 
             for line in infile:
                 dat = line.split("\t")[0:8]
@@ -43,4 +43,4 @@ if __name__ == "__main__":
                     else:
                         return info[elem["ID"]] if elem["ID"] in info else "NA"
 
-                out.write( var + "\t" + dat[0] + "\t" + dat[1] + "\t".join([  getdat(elem, info) for elem in fields  ] ) + "\n")
+                out.write( var + "\t" + dat[0] + "\t" + dat[1] + "\t" + "\t".join([  getdat(elem, info) for elem in fields  ] ) + "\n")
