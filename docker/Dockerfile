@@ -1,8 +1,8 @@
 FROM ubuntu:16.04
-COPY scripts/lift.py scripts/split_single_chrom.py scripts/scrape_vcf_info.py scripts/liftOver data/hg19ToHg38.over.chain.gz ./
+COPY scripts/split_single_chrom.py scripts/scrape_vcf_info.py scripts/liftOver data/hg19ToHg38.over.chain.gz gr
 RUN apt-get update && apt-get install mercurial --yes && \
 apt-get install gcc zlib1g-dev wget make libcurl4-openssl-dev libbz2-dev liblzma-dev \
-bzip2 curl python3 make gcc g++ libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes && \
+bzip2 curl python make gcc g++ libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes && \
 wget https://github.com/samtools/htslib/releases/download/1.7/htslib-1.7.tar.bz2 && \
 tar -xvjf htslib-1.7.tar.bz2 && cd htslib-1.7 && ./configure && make && make install && cd .. && \
 hg clone -b beta https://gavinband@bitbucket.org/gavinband/qctool && \
@@ -22,7 +22,6 @@ COPY --from=0 /usr/local/bin/bgzip /usr/local/bin/
 COPY --from=0 /usr/local/bin/htsfile /usr/local/bin/
 COPY --from=0 /usr/local/bin/bcftools /usr/local/bin/
 COPY --from=0 split_single_chrom.py /usr/local/bin/
-COPY --from=0 lift.py /usr/local/bin/
 COPY --from=0 scrape_vcf_info.py /usr/local/bin/
 COPY --from=0 /qctool/build/release/qctool_v2* /usr/local/bin/qctool
 COPY --from=0 /bgen/build/apps/bgenix /usr/local/bin/
