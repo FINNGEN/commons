@@ -1,0 +1,5 @@
+{
+  "copyfiles.filestocopy": "/Users/mitja/projects/finngen/ukbb_matching/data/download_data_small.tsv",
+  "copyfiles.docopy.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.12",
+  "copyfiles.bucket": "gs://r1_data/UKBB_results2/"
+}

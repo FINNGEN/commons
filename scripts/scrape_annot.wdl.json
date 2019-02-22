@@ -3,5 +3,5 @@
   "scrape_annots.cpu": "2",
   "scrape_annots.memory": "8G",
   "scrape_annots.external_annot": "gs://r1_data/R1_variant_annotation.tsv",
-  "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.15"
+  "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.2"
 }
