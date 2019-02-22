@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
             for line in infile:
                 dat = line.split("\t")[0:8]
-                var = dat[0] + "_" + dat[1] + "_" + dat[3] + "_" + dat[4]
+                var = dat[0].replace('chr', '').replace('X', '23').replace('Y', '24').replace('MT', '25').replace('M', '25') + ":" + dat[1] + ":" + dat[3] + ":" + dat[4]
                 info = { d[0]:(d[1] if len(d)>1 else "") for d in list(map(lambda x: x.split("="), dat[7].split(";")) ) }
 
                 def getdat( elem, info):
