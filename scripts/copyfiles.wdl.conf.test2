@@ -1,6 +1,0 @@
-{
-  "copyfiles.filestocopy": "gs://r1_data/UKBB_results2/download_data.tsv",
-  "copyfiles.dolift.memory": "8",
-  "copyfiles.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.13",
-  "copyfiles.dolift.local_disk": "100"
-}

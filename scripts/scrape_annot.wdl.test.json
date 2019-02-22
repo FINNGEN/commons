@@ -1,7 +1,0 @@
-{
-  "scrape_annots.vcfs": "/Users/mitja/projects/finngen/filestoconv",
-  "scrape_annots.cpu": "2",
-  "scrape_annots.memory": "8G",
-  "scrape_annots.external_annot": "/Users/mitja/projects/finngen/annot.tsv",
-  "scrape_annots.docker": "conv_dock:0.14"
-}
