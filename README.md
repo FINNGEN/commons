@@ -29,6 +29,11 @@ To enable docker edit options data/workflow.options.json to include wanted docke
 data/backends.conf gives reasonable defaults for running locally/SGE/google cloud. Modify default backend to use on or the other.
 
 
+## Liftover arbitraty files between genome builds
+
+You need to download correct chain file for liftover from ucsc http://hgdownload.cse.ucsc.edu/goldenpath/hg19/liftOver/
+Use ```scripts/lift.py``` to lift a file to different build. See script command line docs for options≥
+
 ## Scrape info from release VCF files workflow
 
 Pipeline for scraping all info fields from released VCF files and joining with external annotation.
