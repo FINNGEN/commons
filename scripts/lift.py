@@ -1,32 +1,9 @@
 #! /usr/bin/env python3
 
-import argparse
-import gzip
+import argparse,gzip,sys,subprocess,os,shlex
 from functools import partial
-import sys
-import subprocess
+from tempfile import NamedTemporaryFile
 
-parser = argparse.ArgumentParser(description='Add 38 positions to summary file')
-parser.add_argument("file", help=" Whitespace separated file with either single column giving variant ID in chr:pos:ref:alt or those columns separately")
-
-parser.add_argument("-var", help="Variant column in chr:pos:ref:alt.")
-parser.add_argument("-chr", help="Chromosome column name")
-parser.add_argument("-pos", help="Position column name")
-parser.add_argument("-ref", help="ref column name")
-parser.add_argument("-alt", help="alt column name")
-
-
-args = parser.parse_args()
-
-CHAINFILE="hg19ToHg38.over.chain.gz"
-liftOver="liftOver"
-chr = None
-pos = None
-ref = None
-alt = None
-
-get_dat_func = None
-joinsortargs = ["-v variant"]
 
 def get_dat_var(line, index):
     d = line[index].split(":")
@@ -35,33 +12,93 @@ def get_dat_var(line, index):
         return None
     return d
 
-with gzip.open( args.file ,'rt') as res:
-    header = res.readline().rstrip("\n").split()
 
-    if args.var is None:
-        if args.chr is None or args.pos is None or args.ref is None or args.alt is None:
-            raise Exception("If var column not specified you must specify -chr -pos -ref and -alt")
-        chr = header.index(args.chr)
-        pos = header.index(args.pos)
-        ref = header.index(args.ref)
-        alt = header.index(args.alt)
-        joinsortargs = ["--chr",chr+1,"--pos",pos+1,"--ref", ref+1, "--alt", alt+1]
-        get_dat_func = lambda line:  (line[chr], line[pos], line[ref], line[alt])
+def return_open_func(f):
+    '''
+    Detects file extension and return proper open_func
+    '''
+   
+    file_path = os.path.dirname(f)
+    basename = os.path.basename(f)
+    file_root, file_extension = os.path.splitext(basename)
+    
+    if 'bgz' in file_extension:
+        #print('gzip.open with rb mode')
+        open_func = partial(gzip.open, mode = 'rb')
+    
+    elif 'gz' in file_extension:
+        #print('gzip.open with rt mode')
+        open_func = partial(gzip.open, mode = 'rt')
+
     else:
-        var = header.index(args.var)
-        joinsortargs = ["--var",var+1]
-        get_dat_func = partial(get_dat_var,index=var)
+        #print('regular open')
+        open_func = open      
+    return open_func
 
-    with open("tmp.bed", 'w') as bed:
-        for line in res:
-            vardat = get_dat_func(line.rstrip("\n").split())
-            bed.write( "{}\t{}\t{}\t{}".format("chr"+vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3]) ) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n" )
+def lift(args):
+    '''
+    Finds the proper header column names and calls the liftover.sh script
+    '''
+    open_func = return_open_func(args.file)
+    with open_func(args.file) as res:
+        #skip first line anyways
+        header = res.readline().rstrip("\n").split()
+        if args.var:
+            print(args.var)
+            if not args.numerical:
+                args.var = header.index(args.var)
+                
+            print(args.var)
+            joinsortargs =f"--var {args.var+1}"
+            get_dat_func = partial(get_dat_var,index=args.var) 
 
-    print([liftOver, "tmp.bed",CHAINFILE, "variants_lifted" ,"errors"])
+        elif args.info:
+            if not args.numerical:
+                args.info = [header.index(elem) for elem in args.info]
 
-    #subprocess.run(["rm","tmp.bed"])
-    subprocess.run([liftOver, "tmp.bed",CHAINFILE, "variants_lifted", "errors"])
-    joincmd = ["scripts/joinsort.sh", args.file, "variants_lifted" ]
-    joincmd.extend([ str(v) for v in joinsortargs])
-    print(joincmd)
-    subprocess.run(joincmd)
+            chrom,pos,ref,alt = args.info
+            print(args.info)
+            joinsortargs = f"--chr {chrom+1} --pos {pos+1} --ref {ref+1} --alt {alt+1}"
+            get_dat_func = lambda line:  (line[chrom], line[pos], line[ref], line[alt])
+
+        tmp_bed = NamedTemporaryFile(delete=True)
+        with open(tmp_bed.name, 'w') as out:
+            for line in res:
+                vardat = get_dat_func(line.strip().split())
+                string = "{}\t{}\t{}\t{}".format("chr"+vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3])) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n"
+                out.write(string)
+                
+    cmd = f"liftOver {tmp_bed.name} {args.chainfile} variants_lifted errors"
+    subprocess.run(shlex.split(cmd))
+    
+    joinsort = f"{os.path.join(args.scripts_path,'joinsort.sh')}"
+    subprocess.run(shlex.split(f"chmod +x {joinsort}"))
+    
+    joincmd = f"{joinsort} {args.file} variants_lifted {joinsortargs}"
+    subprocess.run(shlex.split(joincmd))
+
+                    
+if __name__=='__main__':
+
+    parser = argparse.ArgumentParser(description='Add 38 positions to summary file')
+    parser.add_argument("file", help=" Whitespace separated file with either single column giving variant ID in chr:pos:ref:alt or those columns separately")
+    parser.add_argument("--chainfile", help=" Chain file for liftover",required = True)
+        
+    group = parser.add_mutually_exclusive_group(required = True)
+    group.add_argument('--info',nargs =4, metavar = ('chr','pos','ref','alt'), help = 'Name of columns')
+    group.add_argument("--var",help ="Column name if : separated")
+
+    parser.add_argument("--numerical",default = False,help='Columns are passed by number and not name',action = 'store_true')
+
+    args = parser.parse_args()
+    if args.numerical:
+        if args.info: args.info = list(map(int,args.info))
+        if args.var: args.var = int(args.var)
+        
+    args.scripts_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/'
+        
+    
+    print(args)
+    
+    lift(args)
+

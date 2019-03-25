@@ -12,10 +12,12 @@
 
 export LCTYPE=C
 export LANG=C
-source "scripts/easyoptions.sh" || exit
+my_dir="$(dirname "$0")"
+source "${my_dir}/easyoptions.sh" || exit
 
 inputfile=$1
 liftedfile=$2
+
 
 cols=$(zcat < "$inputfile" | head -n 1 | awk '{ print NF}')
 
