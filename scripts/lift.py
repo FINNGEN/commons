@@ -87,13 +87,17 @@ if __name__=='__main__':
     group = parser.add_mutually_exclusive_group(required = True)
     group.add_argument('--info',nargs =4, metavar = ('chr','pos','ref','alt'), help = 'Name of columns')
     group.add_argument("--var",help ="Column name if : separated")
-
-    parser.add_argument("--numerical",default = False,help='Columns are passed by number and not name',action = 'store_true')
-
+    
     args = parser.parse_args()
-    if args.numerical:
-        if args.info: args.info = list(map(int,args.info))
-        if args.var: args.var = int(args.var)
+
+    # checks if var/info are numerical or strings
+    args.numerical = False
+    if args.var and args.var.isdigit():
+        args.var = int(args.var)
+        args.numerical = True
+    if args.info and  all(elem.isdigit() for elem in args.info):
+        args.info = list(map(int,args.info))
+        args.numerical = True
         
     args.scripts_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/'
         
