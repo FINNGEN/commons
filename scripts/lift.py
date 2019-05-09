@@ -77,12 +77,15 @@ def lift(args):
     joincmd = f"{joinsort} {args.file} variants_lifted {joinsortargs}"
     subprocess.run(shlex.split(joincmd))
 
-                    
+    mv_cmd = f"mv -f {args.file}.lifted.gz variants_lifted errors {args.out}"
+    subprocess.run(shlex.split(mv_cmd))
+    
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(description='Add 38 positions to summary file')
     parser.add_argument("file", help=" Whitespace separated file with either single column giving variant ID in chr:pos:ref:alt or those columns separately")
     parser.add_argument("--chainfile", help=" Chain file for liftover",required = True)
+    parser.add_argument("--out", help=" Folder where to save the results",required = False)
         
     group = parser.add_mutually_exclusive_group(required = True)
     group.add_argument('--info',nargs =4, metavar = ('chr','pos','ref','alt'), help = 'Name of columns')
@@ -98,7 +101,9 @@ if __name__=='__main__':
     if args.info and  all(elem.isdigit() for elem in args.info):
         args.info = list(map(int,args.info))
         args.numerical = True
-        
+
+    if not args.out:
+        args.out = '/'.join(args.file.split('/')[:-1])
     args.scripts_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/'
         
     
