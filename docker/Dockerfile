@@ -1,5 +1,5 @@
 FROM ubuntu:16.04
-COPY scripts/split_single_chrom.py scripts/scrape_vcf_info.py scripts/liftOver data/hg19ToHg38.over.chain.gz gr
+COPY scripts/split_single_chrom.py scripts/scrape_vcf_info.py scripts/liftOver / 
 RUN apt-get update && apt-get install mercurial --yes && \
 apt-get install gcc zlib1g-dev wget make libcurl4-openssl-dev libbz2-dev liblzma-dev \
 bzip2 curl python make gcc g++ libz-dev libbz2-dev liblzma-dev libreadline6 libreadline6-dev --yes && \
@@ -9,6 +9,7 @@ hg clone -b beta https://gavinband@bitbucket.org/gavinband/qctool && \
 cd qctool && ./waf-1.5.18 configure && ./waf-1.5.18 && cd ..  && \
 hg clone https://bitbucket.org/gavinband/bgen && \
 cd bgen && ./waf configure && ./waf && \
+wget http://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz && \
 wget https://github.com/samtools/bcftools/releases/download/1.7/bcftools-1.7.tar.bz2 && tar -xvjf bcftools-1.7.tar.bz2 && cd bcftools-1.7 && \
 ./configure && make && make install
 
