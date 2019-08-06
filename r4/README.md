@@ -95,8 +95,78 @@ gsutil ls gs://r4_data/saige/summary_stats_for_pheweb/*.gz | sort > R4_DEMO_ETC_
 gsutil cp R4_DEMO_ETC_ENDPOINTS_summary_files.txt gs://r4_data/pheno/
 ```
 
-fdcd0274-bbab-43aa-8085-2afaeaeb3c6d
+fdcd0274-bbab-43aa-8085-2afaeaeb3c6d  
+^ some pheno tasks keep running, custom 1 cpu/3g  
+e668e9d2-9cfc-47a1-985d-caf60217560f  
+^ changed to n1-standard-1, all ok
 
+```
+cd /mnt/r4
+mkdir -p generated-by-pheweb/pheno_gz generated-by-pheweb/manhattan generated-by-pheweb/sites generated-by-pheweb/qq generated-by-pheweb/cache
+
+gsutil -mq cp gs://fg-cromwell/pheweb_import/e668e9d2-9cfc-47a1-985d-caf60217560f/call-pheno/**/*.gz* generated-by-pheweb/pheno_gz/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/fdcd0274-bbab-43aa-8085-2afaeaeb3c6d/call-pheno/**/*.gz* generated-by-pheweb/pheno_gz/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/e668e9d2-9cfc-47a1-985d-caf60217560f/call-pheno/**/manhattan/* generated-by-pheweb/manhattan/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/fdcd0274-bbab-43aa-8085-2afaeaeb3c6d/call-pheno/**/manhattan/* generated-by-pheweb/manhattan/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/e668e9d2-9cfc-47a1-985d-caf60217560f/call-pheno/**/qq/* generated-by-pheweb/qq/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/fdcd0274-bbab-43aa-8085-2afaeaeb3c6d/call-pheno/**/qq/* generated-by-pheweb/qq/
+
+gsutil -mq cp gs://fg-cromwell/pheweb_import/e668e9d2-9cfc-47a1-985d-caf60217560f/**/top* generated-by-pheweb/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/e668e9d2-9cfc-47a1-985d-caf60217560f/**/best* generated-by-pheweb/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/e668e9d2-9cfc-47a1-985d-caf60217560f/**/pheno-list.json .
+
+gsutil -mq cp gs://fg-cromwell/pheweb_import/fdcd0274-bbab-43aa-8085-2afaeaeb3c6d/**/sites/* generated-by-pheweb/sites/
+gsutil -mq cp gs://fg-cromwell/pheweb_import/fdcd0274-bbab-43aa-8085-2afaeaeb3c6d/**/gene*b38* generated-by-pheweb/cache/
+
+touch generated-by-pheweb/*/*.tbi
+touch generated-by-pheweb/*.tbi
+```
+
+### Add metadata to pheno-list.json
+
+```
+mv pheno-list.json pheno-list.json.orig
+
+cat ~/pheweb/js/phenolist_conf.json
+{
+    "phenolist": "/mnt/r4/pheno-list.json.orig",
+    "pheno": "/home/jkarjala/R4_COV_PHENO_V0.txt",
+    "phenoname": "/home/jkarjala/FINNGEN_ENDPOINTS_DF4_2019-06-27.txt",
+    "category": "/home/jkarjala/FG_class_definitions.txt",
+    "nomesco": "",
+    "html": ""
+}
+
+node --max-old-space-size=8192 ~/pheweb/js/augmentPhenolist.js pheweb/js/phenolist_conf.json > /mnt/r4/pheno-list.json
+
+cat pheno-list.log
+info: 36 phenotypes, 3952 phenotypes' annotations and 14 categories read
+info: Unexpected 'category': ALCOHOL, using 'Other'
+info: Unexpected 'category': C, using 'Other'
+info: No-category phenocode: IPF, using 'Other'
+info: Unexpected 'category': RHEUMA, using 'Other'
+info: Unexpected 'category': RX, using 'Other'
+info: Unexpected 'category': RX, using 'Other'
+info: No-category phenocode: SSRI, using 'Other'
+info: No-category phenocode: T1D, using 'Other'
+info: No-category phenocode: T2D, using 'Other'
+
+cat descriptions_error.log
+cat descriptions_combined.log
+# empty
+```
+
+### FinnGen and gnomAD annotations
+
+```
+mkdir -p annotations/finngen && cd annotations/finngen
+gsutil -m cp gs://r4_data/annotations/* .
+mv R4_annotated_variants_v0.gz annotated_variants.gz
+mv R4_annotated_variants_v0.gz.tbi annotated_variants.gz.tbi
+touch *.tbi
+
+cp -r /mnt/r3_1/annotations/gnomad ..
+```
 
 ## Variant annotations
 
@@ -108,7 +178,7 @@ After workflow:
 gsutil -m cp gs://fg-cromwell/scrape_annots/fcc15974-bf2c-4027-9f49-4880da9db25d/**/annotated_variants.gz* .
 # get rid of extra columns
 gunzip -c annotated_variants.gz | cut -f1-322,325-326,328- | bgzip -@9 > R4_annotated_variants_v0.gz && tabix -s2 -b3 -e3 R4_annotated_variants_v0.gz
-gsutil -m cp annotated_variants.gz* gs://r4_data/annotations/
+gsutil -m cp R4_annotated_variants_v0.gz* gs://r4_data/annotations/
 ```
 
 ## Create variant lists with max 100k variants per chunk for smaller BGEN creation
