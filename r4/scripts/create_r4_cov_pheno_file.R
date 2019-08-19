@@ -5,7 +5,7 @@ require(tidylog)
 require(tibble)
 require(R.utils)
 
-COHORT_FILE <- "../FGIDlist_DF3-DF4_COHORT-27-02-2019.txt"
+COHORT_FILE <- "../finngen_R4_cohort_information"
 BATCH_FILE <- "../../geno/fgfactory_R4_passSamples_10-07-2019.txt"
 PCA_FILE <- "../../geno/PCA/R4_final.eigenvec"
 PHENO_FILE <- "finngen_R4_endpoint_pheno_only.gz"
