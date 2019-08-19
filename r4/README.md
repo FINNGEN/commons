@@ -1,4 +1,4 @@
-# R4 ANALYSIS NOTES V0 - with preliminary phenotype data
+# R4 ANALYSIS NOTES
 
 ## Get variants with info >0.95 in every batch
 
@@ -56,6 +56,26 @@ done.
 awk '{if ($4 != 1 && $4 != 2) print $0}' R4_seximputed.sexcheck
 ```
 
+## Create covariate/phenotype file
+
+```
+gsutil -mq cp gs://thl-incoming-data/from_THL_registerteam/finngen_R4_phenotype_v2/finngen_R4_phenotype_data/*.gz .
+gunzip -c finngen_R4_endpoint.gz | awk -f scripts/clean_pheno.awk | gzip > finngen_R4_endpoint_pheno_only.gz
+```
+
+Gather required files:
+```
+COHORT_FILE <- "../FGIDlist_DF3-DF4_COHORT-27-02-2019.txt"
+BATCH_FILE <- "../../geno/fgfactory_R4_passSamples_10-07-2019.txt"
+PCA_FILE <- "../../geno/PCA/R4_final.eigenvec"
+PHENO_FILE <- "finngen_R4_endpoint_pheno_only.gz"
+MINIMUM_FILE <- "finngen_R4_minimum.gz"
+SEX_FILE <- "../R4_seximputed.sexcheck"
+OUT_FILE <- "R4_COV_PHENO_V1.txt"
+```
+
+and run `Rscript scripts/create_r4_cov_pheno_file.R`, creates `R4_COV_PHENO_V1.txt.gz`
+
 ## Plink dataset for GRM
 
 ```
@@ -64,12 +84,27 @@ gsutil ls gs://fg-cromwell/convert_plink_merge/e3a8ac87-3f39-43a4-a52f-e01d70d9b
 gsutil cp R4_missingness_set_bedfiles.txt gs://r4_data/grm/
 
 # get included samples after creating cov/pheno file with the R script
-gunzip -c R4_COV_PHENO_V0.txt.gz | tail -n+2 | awk '{print $1,$1,0,0,0,-9}' > R4_COV_PHENO_V0.fam
-gsutil cp R4_COV_PHENO_V0.fam gs://r4_data/grm/
+gunzip -c R4_COV_PHENO_V1.txt.gz | tail -n+2 | awk '{print $1,$1,0,0,0,-9}' > R4_COV_PHENO_V1.fam
+gsutil cp R4_COV_PHENO_V1.fam gs://r4_data/grm/
 ```
 
-GRM V0 Plink dataset creation
-a22515bf-f716-4943-9005-ca93b790147f
+GRM Plink dataset creation workflow `fb58aa0f-d03c-4914-8c1f-40ff7a73793b`
+
+Inputs:
+
+```
+{
+    "plink_grm.bedfilelist": "gs://r4_data/grm/R4_missingness_set_bedfiles.txt",
+    "plink_grm.filter_prune.include_variants": "gs://r4_data/grm/R4_variants_info_allbatches_0.95.txt",
+    "plink_grm.filter_prune.include_samples": "gs://r4_data/grm/R4_COV_PHENO_V1.fam",
+    "plink_grm.filter_prune.geno_missing": 0.03,
+    "plink_grm.filter_prune.maf": 0.01,
+    "plink_grm.filter_prune.ld": "1000000 1000 0.1",
+    "plink_grm.merge_plink.out": "R4_GRM_V1"
+}
+```
+
+The WDL for GRM Plink creation is in [https://github.com/FINNGEN/commons/blob/master/wdl/plink_grm.wdl](https://github.com/FINNGEN/commons/blob/master/wdl/plink_grm.wdl)
 
 ```
 gsutil cat gs://fg-cromwell/plink_grm/a22515bf-f716-4943-9005-ca93b790147f/call-merge_plink/R4_GRM_V0.bim | wc -l
@@ -80,14 +115,17 @@ gsutil -m cp gs://fg-cromwell/plink_grm/a22515bf-f716-4943-9005-ca93b790147f/cal
 
 ## SAIGE workflows
 
+### V0
+
 Demo phenos - most nulls ok (preemptibles not restarted) tests not (1G memory is not enough, 2G seems to be fine)
 3fa51ecd-48c9-4cae-8c4e-d8ff1fe680e4
 
 Demo phenos - rest of the nulls and all tests (update to cromwell 44 in between, tests run with n1-standard-1, and fixed SAIGE docker post munging)
 006d578b-c88d-4630-88b8-828ec77b301d
 
-
 ## PheWeb import
+
+### V0
 
 ```
 gsutil -m cp gs://fg-cromwell/saige/006d578b-c88d-4630-88b8-828ec77b301d/**/*.pheweb.gz* gs://r4_data/saige/summary_stats_for_pheweb/
