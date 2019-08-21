@@ -67,9 +67,9 @@ cov_pheno <- inlier_samples %>%
   filter(!is.na(AGE_AT_DEATH_OR_NOW)) %>%
   mutate(AGE_AT_DEATH_OR_NOW = as.numeric(AGE_AT_DEATH_OR_NOW))
   
-# assign batches removing one batch for non-collinearity
+# assign batches
 uniq_batch <- sort(unique(cov_pheno$batch))
-for (batch in uniq_batch[1:length(uniq_batch) - 1]) {
+for (batch in uniq_batch[1:length(uniq_batch)]) {
   cov_pheno[[paste0("BATCH_", batch)]] <- ifelse(cov_pheno$batch == batch, 1, 0)
 }
 
