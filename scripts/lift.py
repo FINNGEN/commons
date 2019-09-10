@@ -103,6 +103,7 @@ def lift(args):
         mv_cmd = f"mv -f variants_lifted {args.out}"
         subprocess.run(shlex.split(mv_cmd))
         mv_cmd = f"mv -f errors {args.out}"
+        subprocess.run(shlex.split(mv_cmd))
 
 if __name__=='__main__':
 
