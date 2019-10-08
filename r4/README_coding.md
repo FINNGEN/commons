@@ -186,79 +186,26 @@ NR>=1 {
 }' | bgzip -@ 4 > r4_coding_variants.txt.gz
 ```
 
-## Add recessive results
+## Add recessive and dominant results and PIPs
 
-Requires `*.SAIGE.txt` recessive results from the SAIGE pipeline here in `./recessive`, TODO add munging to pipeline itself
-
-### Combine pheno results into one
+Get `full.formatted.txt.gz` files from recessive and dominant GWAS pipeline
 
 ```
-awk '
-BEGIN{FS=" "; OFS="\t"}
-{
-    if(FNR==NR && NR==1) {
-        $1=$1; print "pheno",$0
-    } else {
-        $1=$1; sub("recessive/R4_GRM_V1-", "", FILENAME); sub("-r4_coding_info_0.6.bgen.SAIGE.txt", "", FILENAME); print FILENAME,$0
-    }
-}' recessive/*.SAIGE.txt | bgzip -@ 4 > r4_coding_recessive_full.txt.gz
+gsutil cp gs://fg-cromwell/saige_tests/92ceb874-8d7e-4697-b545-afdd1738f1ac/call-combine/full.formatted.txt.gz r4_coding_recessive_full.formatted.txt.gz
+gsutil cp gs://fg-cromwell/saige_tests/e7a42906-3dd5-4fba-bd4f-16597f170cae/call-combine/full.formatted.txt.gz r4_coding_dominant_full.formatted.txt.gz
 ```
 
-### Format numbers, replace 0 pvals with NA
-
-Takes half an hour
+Get SuSiE `.snp` files from finemapping pipeline
 
 ```
-time gunzip -c r4_coding_recessive_full.txt.gz | awk '
-BEGIN{FS=OFS="\t"}
-NR==1{
-    sub("SNPID", "variant");
-    for(i=1;i<=NF;i++) a[$i]=i;
-    print $a["pheno"],$a["variant"],$a["AC_Allele2"],$a["AF_Allele2"],$a["imputationInfo"],$a["N"],$a["BETA"],$a["SE"],$a["p.value"],$a["AF.Cases"],$a["AF.Controls"]
-} NR>1{
-    printf "%s\t%s\t%.3f\t%.3e\t%.3f\t%d\t%.3f\t%.3f\t%.3e\t%.3e\t%.3e\n",
-    $a["pheno"],$a["variant"],$a["AC_Allele2"],$a["AF_Allele2"],$a["imputationInfo"],$a["N"],$a["BETA"],$a["SE"],$a["p.value"],$a["AF.Cases"],$a["AF.Controls"]
-}' | awk '
-BEGIN{FS=OFS="\t"}
-NR==1{
-    for(i=1;i<=NF;i++) a[$i]=i
-}
-{
-    if($a["p.value"] == 0) $a["p.value"] = "NA";
-    print $0
-}' | bgzip -@4 > r4_coding_recessive_full.formatted.txt.gz
+mkdir -p finemapping/susie/snp
+gsutil -mq cp gs://r4_data_west1/finemap/*.susie.snp finemapping/susie/snp/
 ```
 
-### Join recessive results with additive
-
-Half an hour
+Add recessive/dominant p-values and PIPs:
 
 ```
-n_join=$((`gunzip -c r4_coding_variant_associations_1e-4.txt.gz | head -1 | awk 'BEGIN{ FS="\t"} {print NF}'` + `gunzip -c r4_coding_recessive_full.formatted.txt.gz | head -1 | awk 'BEGIN{FS="\t"} {print NF-1};'`))
-join -a 1 -t $'\t' -1 1 -2 1 \
-<(gunzip -c r4_coding_variant_associations_1e-4.txt.gz | awk 'BEGIN{FS=OFS="\t"} NR==1{print "#"$1"_"$3,$0} NR>1{print $1"_"$3,$0}' | sort -k1,1) \
-<(gunzip -c r4_coding_recessive_full.formatted.txt.gz | awk 'BEGIN{FS=OFS="\t"} NR==1{print "#"$1"_"$2,$0} NR>1{sub("chr", "", $2); gsub("_", ":", $2); print $1"_"$2,$0}' | sort -k1,1) \
-| awk -v nf=$n_join '
-{
-    printf $0;
-    if(NF<nf) {
-        for(i=NF+1;i<=nf;i++) {printf "\tNA"};
-    } printf "\n"
-}
-' | bgzip > r4_coding_variant_associations_1e-4_recessive.txt.gz
+python3 scripts/add_rec_dom_pip.py r4_coding_variant_associations_1e-4.txt.gz r4_coding_recessive_full.formatted.txt.gz r4_coding_dominant_full.formatted.txt.gz "finemapping/susie/snp/*.susie.snp"
 ```
 
-### Create table for browser
-
-```
-gunzip -c r4_coding_variant_associations_1e-4_recessive.txt.gz | \
-awk '
-BEGIN{FS=OFS="\t"}
-NR==1{
-    sub("p\\.value", "pval_recessive", $0);
-    for (i=0;i<=NF;i++) if(!a[$i]) a[$i]=i
-}
-{
-    print $a["pheno"],$a["phenoname"],$a["variant"],$a["rsid"],$a["pval"],$a["beta"],$a["sebeta"],$a["pval_recessive"],$a["variant_category"],$a["most_severe"],$a["gene_most_severe"],$a["INFO"],$a["AF"],$a["AC_Hom"],$a["enrichment_nfsee"],$a["grch37_locus"]
-}' > coding_web_recessive.txt
-```
+Writes `coding_web.txt` for the browser
