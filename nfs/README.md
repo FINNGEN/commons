@@ -197,20 +197,18 @@ cat ${BASE_CONFIG} \
     > ${OUTPUT_DIR}/${1}.ovpn
 ```
 
-Then
+Then (change your_initials to your initials):
 
 ```
 chmod 700 /opt/clients/gen_config.sh
 
 cd /opt/clients/
-./gen_config.sh client_jk
-./gen_config.sh client_mk
+./gen_config.sh client_your_initials
 
-emacs files/client_jk.ovpn
-emacs files/client_mk.ovpn
+emacs files/client_your_initials.ovpn
 ```
 
-In these files set
+Set
 
 ```
 tls-auth tiv.key 1
@@ -218,10 +216,12 @@ tls-auth tiv.key 1
 
 ## Get the configs to your local machine
 
+Change your_initials to your initials
+
 ```
 mkdir -p ~/.vpn
 cd ~/.vpn
-gcloud compute scp vpn:/opt/clients/files/client_jk.ovpn . --project phewas-development
+gcloud compute scp vpn:/opt/clients/files/client_your_initials.ovpn . --project phewas-development
 gcloud compute scp vpn:/opt/openvpn-ca/keys/tiv.key . --project phewas-development
 ```
 
