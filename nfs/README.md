@@ -221,8 +221,8 @@ tls-auth tiv.key 1
 ```
 mkdir -p ~/.vpn
 cd ~/.vpn
-gloud compute scp vpn:/opt/clients/files/client_jk.ovpn . --project phewas-development
-gloud compute scp vpn:/opt/openvpn-ca/keys/tiv.key . --project phewas-development
+gcloud compute scp vpn:/opt/clients/files/client_jk.ovpn . --project phewas-development
+gcloud compute scp vpn:/opt/openvpn-ca/keys/tiv.key . --project phewas-development
 ```
 
 Then drag the .ovpn file to Tunnelblick and good to go.
