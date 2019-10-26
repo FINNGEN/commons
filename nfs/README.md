@@ -233,3 +233,11 @@ On MacOS:
 sudo mkdir -p /mnt/nfs
 sudo mount_nfs -o resvport 10.179.247.250:/vol1 /mnt/nfs/
 ```
+
+If you at some point can't connect to the VPN or can't SSH to the VPN server VM, your routing table may need to be flushed:
+
+```
+sudo ifconfig en0 down
+sudo route flush
+sudo ifconfig en0 up
+```
