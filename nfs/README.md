@@ -214,7 +214,7 @@ Set
 tls-auth tiv.key 1
 ```
 
-## Get the configs to your local machine
+## Get the configs to your local machine and connect
 
 Change your_initials to your initials
 
