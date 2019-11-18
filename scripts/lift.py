@@ -84,7 +84,7 @@ def lift(args):
             err_count+=1
 
         if(err_count>0):
-            print(f'WARNING. {int(err_count/2)} variants could not be correctly lifter. Consult file {args.out+"/" if args.out else ""}"errors" for details')
+            print(f'WARNING. {int(err_count/2)} variants could not be correctly lifter. Consult file {errors} for details')
 
 
     #if args.sep:
@@ -93,12 +93,10 @@ def lift(args):
         #joinsortargs=f'--sep {args.sep} {joinsortargs}'
 
     joinsort = f"{os.path.join(args.scripts_path,'joinsort.sh')}"
-
     subprocess.run(shlex.split(f"chmod +x {joinsort}"))
 
     joincmd = f"{joinsort} {args.file} {variants_lifted} {joinsortargs}"
     subprocess.run(shlex.split(joincmd))
-
            
     if args.out:
         mv_cmd = f"mv -f ./{os.path.basename(args.file)}.lifted.gz {args.out}"

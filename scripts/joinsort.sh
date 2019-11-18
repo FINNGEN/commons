@@ -22,7 +22,6 @@ inputfile=$1
 liftedfile=$2
 
 cat_cmd="cat"
-zcat $inputfile 2>/dev/null
 if [[ $? -eq 0 ]];
 then
     cat_cmd='zcat'
