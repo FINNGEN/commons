@@ -77,8 +77,9 @@ def lift(args):
     joincmd = f"{joinsort} {args.file} variants_lifted {joinsortargs}"
     subprocess.run(shlex.split(joincmd))
 
-    mv_cmd = f"mv -f ./{os.path.basename(args.file)}.lifted.gz ./{os.path.basename(args.file)}.lifted.gz.tbi variants_lifted errors {args.out}"
-    subprocess.run(shlex.split(mv_cmd))
+    if args.out:
+        mv_cmd = f"mv -f ./{os.path.basename(args.file)}.lifted.gz ./{os.path.basename(args.file)}.lifted.gz.tbi variants_lifted errors {args.out}"
+        subprocess.run(shlex.split(mv_cmd))
     
 if __name__=='__main__':
 
