@@ -20,9 +20,16 @@ task join_annot {
 			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants.gz
 			tabix -S 2 -b 3 -e 3 -s 1 annotated_variants.gz
 		else
-			n_join1=$(( `head -n 1 ${files[0]}| awk 'BEGIN{ FS="\t"} { print NF};'` + `head -n 1 "${external_annot}" | awk 'BEGIN{ FS="\t"} { print NF-1};'`))
-			join -a 1 -t $'\t' -1 2 -2 1 <(cat <(head -n 1 ${files[0]} | awk '{ print "#"$0}' ) <(awk 'FNR>1' ${sep=" " files}) | nl -nln | sort -b -k 2,2 ) <( awk 'BEGIN{ FS="\t"} NR==1{ print "#"$0  } NR>1{ print $0}' "${external_annot}" | sort -b -k 1,1  ) | sort -g -k 2,2 | cut -f 1,3- | awk -v nf=$n_join1 'BEGIN{ FS="\t";OFS="\t"} { printf $0; if(NF<nf) { for(i=NF+1;i<=nf;i++) { printf "\tNA"  };  } printf "\n" }' | bgzip > annotated_variants.gz
-			tabix -b 3 -e 3 -s 2 annotated_variants.gz
+            n_join1=$(( `head -n 1 ${files[0]}| awk 'BEGIN{ FS=OFS="\t"} { print NF};'` + `gunzip -c "${external_annot}" | head -n 1 | awk 'BEGIN{ FS=OFS="\t"} { print NF-1};'`))
+            join -a 1 -t $'\t' -1 2 -2 1 \
+            <(cat <(head -n 1 ${files[0]} | awk 'BEGIN{ FS=OFS="\t"} { print "#"$0}' ) \
+            <(awk 'BEGIN{ FS=OFS="\t"} FNR>1' ${sep=" " files} | awk 'BEGIN{ FS=OFS="\t"} { gsub("_", ":", $1); sub("chr", "", $1); sub("X", 23, $1); sub("Y", 24, $1); sub("MT", 25, $1); sub("M", 25, $1); gsub("chr", "", $2); sub("X", 23, $2); sub("Y", 24, $2); sub("MT", 25, $2); sub("M", 25, $2); print $0 }') \
+            | nl -nln | sort -b -k 2,2 ) \
+            <(gunzip -c "${external_annot}" | awk 'BEGIN{ FS=OFS="\t"} NR==1{ print $0  } \
+            NR>1{ gsub("_", ":", $1); sub("chr", "", $1); sub("X", 23, $1); sub("Y", 24, $1); sub("MT", 25, $1); sub("M", 25, $1); gsub("chr", "", $2); sub("X", 23, $2); sub("Y", 24, $2); sub("MT", 25, $2); sub("M", 25, $2); print $0}' \
+            | sort -b -k 1,1  ) | sort -g -k 2,2 | cut -f 1,3- \
+            | awk -v nf=$n_join1 'BEGIN{ FS=OFS="\t"} { printf $0; if(NF<nf) { for(i=NF+1;i<=nf;i++) { printf "\tNA"  };  } printf "\n" }' | bgzip > annotated_variants.gz
+            tabix -b 3 -e 3 -s 2 annotated_variants.gz
 		fi
 
 	    if [[ -n "${outputfile}" ]]; then

@@ -1,0 +1,9 @@
+{
+    "plink_grm.bedfilelist": "gs://r4_data/grm/R4_missingness_set_bedfiles.txt",
+    "plink_grm.filter_prune.include_variants": "gs://r4_data/grm/R4_variants_info_allbatches_0.95.txt",
+    "plink_grm.filter_prune.include_samples": "gs://r4_data/grm/R4_COV_PHENO_V1.fam",
+    "plink_grm.filter_prune.geno_missing": 0.03,
+    "plink_grm.filter_prune.maf": 0.01,
+    "plink_grm.filter_prune.ld": "1000000 1000 0.1",
+    "plink_grm.merge_plink.out": "R4_GRM_V1"
+}
