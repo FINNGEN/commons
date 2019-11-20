@@ -21,7 +21,11 @@ source "${my_dir}/easyoptions.sh" || exit
 inputfile=$1
 liftedfile=$2
 
+inputfile=$1
+liftedfile=$2
+
 cat_cmd="cat"
+file $inputfile | grep gzip > /dev/null 2>&1
 if [[ $? -eq 0 ]];
 then
     cat_cmd='zcat'
