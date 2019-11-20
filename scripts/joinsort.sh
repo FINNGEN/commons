@@ -22,7 +22,7 @@ inputfile=$1
 liftedfile=$2
 
 cat_cmd="cat"
-zcat $inputfile 2>/dev/null
+file $inputfile | grep gzip > /dev/null 2>&1
 if [[ $? -eq 0 ]];
 then
     cat_cmd='zcat'
