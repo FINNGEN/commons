@@ -55,6 +55,7 @@ def lift(args):
         elif args.info:
             if not args.numerical:
                 if not all(elem in header for elem in args.info):
+                    # check that all columns are present
                     raise Exception(f"Given columns not in data. Missing: { [ elem for elem in args.info if elem not in header] }")
 
                 args.info = [header.index(elem) for elem in args.info ]
@@ -81,7 +82,7 @@ def lift(args):
             err_count+=1
 
         if(err_count>0):
-            print(f'WARNING. {int(err_count/2)} variants could not be correctly lifter. Consult file {args.out+"/" if args.out else ""}"errors" for details')
+            print(f'WARNING. {int(err_count/2)} variants could not be correctly lifter. Consult file {args.out+"/" if args.out else ""}errors for details')
 
     #if args.sep:
         # easyoptions seem not to be able handle 5 switched ?!?!? not implemented
@@ -89,9 +90,7 @@ def lift(args):
         #joinsortargs=f'--sep {args.sep} {joinsortargs}'
 
     joinsort = f"{os.path.join(args.scripts_path,'joinsort.sh')}"
-
     subprocess.run(shlex.split(f"chmod +x {joinsort}"))
-
     joincmd = f"{joinsort} {args.file} variants_lifted {joinsortargs}"
     subprocess.run(shlex.split(joincmd))
    
@@ -119,5 +118,5 @@ if __name__=='__main__':
         args.numerical = True
 
     args.scripts_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/'
-
+    args.file = os.path.abspath(args.file)
     lift(args)
