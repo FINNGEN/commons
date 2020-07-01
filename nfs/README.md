@@ -1,6 +1,40 @@
-# FILESTORE NFS SETUP NOTES
+## REFINERY NFS WORK DISK
 
-## Create Filestore instance
+There is a Google Filestore [NFS SSD instance](https://console.cloud.google.com/filestore/locations/europe-west1-b/instances/nfs?project=finngen-refinery-dev) in the refinery.
+
+The IP address of the instance is 10.139.139.218 and the name of the file share is refinery.
+
+We now use the NFS as a work disk in the refinery instead of local disks. The NFS can be mounted for both reads and writes on any VM in the refinery and looks like a local disk. The genotype and phenotype data of the latest release as well as personal work should be stored on the NFS. When moving to a new release, things related to the previous release should be moved to a bucket or removed. This way we reduce costs and save time by not having disks with duplicated data lying around and won't have to download data many times.
+
+### Mounting the NFS on a Ubuntu VM
+
+1. Install the NFS client
+
+`sudo apt-get install nfs-common`
+
+2. Make a directory to mount the disk at, e.g.
+
+`sudo mkdir -p /mnt/nfs`
+
+3. Mount the disk
+
+`sudo mount.nfs -o defaults,noatime 10.139.139.218:/refinery /mnt/nfs/`
+
+Mounting read-only:
+
+`sudo mount.nfs -r -o defaults,noatime 10.139.139.218:/refinery /mnt/nfs/`
+
+Note that the `discard` and `nodiratime` mount options don't apply to NFS.
+
+4. Start working
+
+`ls -l /mnt/nfs/`
+
+### TODO Scheduled backups
+
+## FILESTORE PHEWAS-DEVELOPMENT NFS SETUP NOTES
+
+### Create Filestore instance
 
 `gcloud filestore instances create finngen-nfs --project phewas-development --zone europe-west1-b --tier=PREMIUM --file-share=name="vol1",capacity=4TB --network=name="default"`
 
@@ -13,7 +47,7 @@ sudo mount 10.179.247.250:/vol1 /mnt/nfs/
 
 where the IP address is the address of the Filestore instance.
 
-## Set up a VPN server to be able to mount the file system locally
+### Set up a VPN server to be able to mount the file system locally
 
 Following/applying [this](https://medium.com/teendevs/setting-up-an-openvpn-server-on-google-compute-engine-9ff760d775d9)
 
@@ -142,7 +176,7 @@ sudo systemctl status openvpn@server
 sudo systemctl enable openvpn@server
 ```
 
-## Create client configs
+### Create client configs
 
 ```
 sudo mkdir -p /opt/clients/files
@@ -214,7 +248,7 @@ Set
 tls-auth tiv.key 1
 ```
 
-## Get the configs to your local machine and connect
+### Get the configs to your local machine and connect
 
 Change your_initials to your initials
 
