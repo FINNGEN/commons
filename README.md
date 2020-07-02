@@ -1,9 +1,9 @@
 # Common scripts for data munging and miscellaneous bioinformatics
 
-This repository curates the miscellaneous scripts that do not deserve their own repository. Everyone is encouraged to place their own little helper scripts and tools here for toher's enjoyment.
+This repository curates the miscellaneous scripts that do not deserve their own repository. Everyone is encouraged to place their own little helper scripts and tools here for other's enjoyment.
 
 ## Organization
-Every helper script should have its own subdirectory, and inside that directory should be a mardown file (README.md) that describes how to use the script. Here is an example layout:
+Every helper script should have its own subdirectory, and inside that directory should be a markdown file (README.md) that describes how to use the script. Here is an example layout:
 ```
 commons
 ├── helper_script_1
