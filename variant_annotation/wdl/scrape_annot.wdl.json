@@ -1,5 +1,5 @@
 {
-  "scrape_annots.vcfs": "gs://r4_data/R4_vcf.txt",
+  "scrape_annots.vcfs": "gs://r6_data/vcf/R6_vcf.txt",
   "scrape_annots.cpu": "2",
   "scrape_annots.memory": "8G",
   "scrape_annots.external_annot": "gs://r3_data/annotations/R3_vep_annot.tsv.gz",
