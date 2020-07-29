@@ -51,7 +51,7 @@ task join_annot {
 
 task extract {
 	File vcf
-	Int local_disk=100
+	Int local_disk=200
   	String docker
 
     String outfile=basename(vcf) + ".annot.gz"
