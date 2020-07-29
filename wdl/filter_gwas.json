@@ -1,0 +1,6 @@
+{
+    "filter_gwas.sumstats_loc": "gs://r5_data/pheno/extra/r5_drugs_for_pheweb_v1.txt",
+    "filter_gwas.filter_af.af_col": "maf",
+    "filter_gwas.filter_af.min_af": 0.005,
+    "filter_gwas.filter_af.docker": "gcr.io/finngen-refinery-dev/bioinformatics:0.5"
+}
