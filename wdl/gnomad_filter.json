@@ -1,6 +1,0 @@
-{
-    "gnomad_filter.vcf_files": "gs://gnomad3/genomes_3.0/vcf.txt",
-    "gnomad_filter.filter.variant_file": "gs://r5_data/annotations/AxiomGT1_V2P2.chipvariants.txt.gz",
-    "gnomad_filter.filter.build": 38,
-    "gnomad_filter.combine.out_name": "gnomad.genomes.r3.0.sites.finngen.chip.tsv.gz"
-}
