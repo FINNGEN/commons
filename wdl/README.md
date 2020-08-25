@@ -20,6 +20,11 @@ calculates qctool snpstats
 input: a list of bgen files  
 output: a .gz tsv file + .tbi index with snpstats for all variants in the bgen files
 
+[split_bgen.wdl](wdl/split_bgen.wdl)  
+splits given bgen files (e.g. per chromosome) into smaller bgen files with the given number of variants in each file  
+input: a list of bgen files  
+output: smaller bgen files
+
 [tomahawk_convert.wdl](wdl/tomahawk_convert.wdl)  
 converts VCF files to Tomahawk .twk format and creates a mapping file between actual variant and its "Tomahawk position" (original Tomahawk doesn't handle multiallelics so we force all variants to be in different positions for Tomahawk)  
 input: a list of .vcf.gz files  
