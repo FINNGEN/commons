@@ -23,7 +23,7 @@ def return_open_func(f):
     file_root, file_extension = os.path.splitext(basename)
 
     result = subprocess.run(['file', f], stdout=subprocess.PIPE)
-    gzip_bool = 1 if 'gzip' in result else 0
+    gzip_bool = True if 'gzip' in result else False
 
     if gzip_bool:
         open_func = partial(gzip.open, mode = 'rt')
