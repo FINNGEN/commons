@@ -108,7 +108,12 @@ if __name__=='__main__':
 
     args = parser.parse_args()
 
-    args.var,args.var_sep = args.var
+    args.file = os.path.abspath(args.file)
+    args.chainfile = os.path.abspath(args.chainfile)
+    args.out = os.path.abspath(args.out)
+    
+    if args.var:
+        args.var,args.var_sep = args.var
     # checks if var/info are numerical or strings
     args.numerical = False
     if args.var and args.var.isdigit():
