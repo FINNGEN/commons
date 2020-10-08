@@ -22,17 +22,15 @@ def return_open_func(f):
     basename = os.path.basename(f)
     file_root, file_extension = os.path.splitext(basename)
 
-    if 'bgz' in file_extension:
-        #print('gzip.open with rb mode')
-        open_func = partial(gzip.open, mode = 'rb')
+    result = subprocess.run(['file', f], stdout=subprocess.PIPE)
+    gzip_bool = True if 'gzip' in result.stdout.decode("utf-8") else False
 
-    elif 'gz' in file_extension:
-        #print('gzip.open with rt mode')
+    if gzip_bool:
         open_func = partial(gzip.open, mode = 'rt')
 
     else:
-        #print('regular open')
         open_func = open
+        
     return open_func
 
 def lift(args):
@@ -108,7 +106,12 @@ if __name__=='__main__':
 
     args = parser.parse_args()
 
-    args.var,args.var_sep = args.var
+    args.file = os.path.abspath(args.file)
+    args.chainfile = os.path.abspath(args.chainfile)
+    args.out = os.path.abspath(args.out)
+    
+    if args.var:
+        args.var,args.var_sep = args.var
     # checks if var/info are numerical or strings
     args.numerical = False
     if args.var and args.var.isdigit():
