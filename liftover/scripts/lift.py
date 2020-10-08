@@ -22,17 +22,15 @@ def return_open_func(f):
     basename = os.path.basename(f)
     file_root, file_extension = os.path.splitext(basename)
 
-    if 'bgz' in file_extension:
-        #print('gzip.open with rb mode')
-        open_func = partial(gzip.open, mode = 'rb')
+    result = subprocess.run(['file', f], stdout=subprocess.PIPE)
+    gzip_bool = 1 if 'gzip' in result else 0
 
-    elif 'gz' in file_extension:
-        #print('gzip.open with rt mode')
+    if gzip_bool:
         open_func = partial(gzip.open, mode = 'rt')
 
     else:
-        #print('regular open')
         open_func = open
+        
     return open_func
 
 def lift(args):
