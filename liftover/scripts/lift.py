@@ -67,7 +67,12 @@ def lift(args):
             joinsortargs = f"--chr {chrom+1} --pos {pos+1} --ref {ref+1} --alt {alt+1}"
             get_dat_func = lambda line: (line[chrom], line[pos], line[ref], line[alt])
 
-        tmp_bed = NamedTemporaryFile(delete=True)
+        if args.temp_dir:
+            tmp_bed = NamedTemporaryFile(dir=args.temp_dir, delete=True)
+            joinsortargs = f"{joinsortargs} --tmp {args.temp_dir}"
+        else:
+            tmp_bed = NamedTemporaryFile(delete=True)
+
         with open(tmp_bed.name, 'w') as out:
             for line in res:
                 vardat = get_dat_func(line.strip().split())
@@ -105,6 +110,7 @@ if __name__=='__main__':
     parser.add_argument("--chainfile", help=" Chain file for liftover",required = True)
     parser.add_argument('-o',"--out", help=" Folder where to save the results",default = os.getcwd())
     parser.add_argument("--sep", help="column separator in file to be lifted. Default tab", default='\t', required=False)
+    parser.add_argument('--temp_dir', help='Temp dir location', required=False)
     group = parser.add_mutually_exclusive_group(required = True)
     group.add_argument('--info',nargs =4, metavar = ('chr','pos','ref','alt'), help = 'Name of columns')
     group.add_argument("--var",nargs = 2,help ="Column name of snpid and separator",metavar = ('snpid','snp_sep'))
