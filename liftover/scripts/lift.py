@@ -5,6 +5,15 @@ from functools import partial
 from tempfile import NamedTemporaryFile
 
 
+# Chromosome mapping
+chrord = { "chr"+str(chr):"chr"+str(chr) for chr in list(range(1,23))}
+chrord.update({str(chr):"chr"+str(chr) for chr in list(range(1,23)) } )
+chrord.update({int(chr):"chr"+str(chr) for chr in list(range(1,23)) } )
+chrord["X"] = chrord[23] = chrord["23"] = chrord["chr23"] = "chrX"
+chrord["Y"] = chrord[24] = chrord["24"] = chrord["chr24"] = "chrY"
+chrord["MT"] = chrord["chrMT"] = chrord["M"] = chrord[25] = chrord["25"] = "chrM"
+
+
 def get_dat_var(line, index,sep):
     d = line[index].split(sep)
     if len(d)<4:
@@ -17,10 +26,6 @@ def return_open_func(f):
     '''
     Detects file extension and return proper open_func
     '''
-
-    file_path = os.path.dirname(f)
-    basename = os.path.basename(f)
-    file_root, file_extension = os.path.splitext(basename)
 
     result = subprocess.run(['file', f], stdout=subprocess.PIPE)
     gzip_bool = True if 'gzip' in result.stdout.decode("utf-8") else False
@@ -47,7 +52,7 @@ def lift(args):
             if not args.numerical:
                 args.var = header.index(args.var)
 
-            joinsortargs =f"--var {args.var+1}"
+            joinsortargs = f"--var {args.var+1}"
             get_dat_func = partial(get_dat_var,index=args.var,sep = args.var_sep)
 
         elif args.info:
@@ -60,18 +65,18 @@ def lift(args):
                 
             chrom,pos,ref,alt = args.info
             joinsortargs = f"--chr {chrom+1} --pos {pos+1} --ref {ref+1} --alt {alt+1}"
-            get_dat_func = lambda line:  (line[chrom], line[pos], line[ref], line[alt])
+            get_dat_func = lambda line: (line[chrom], line[pos], line[ref], line[alt])
 
         tmp_bed = NamedTemporaryFile(delete=True)
         with open(tmp_bed.name, 'w') as out:
             for line in res:
                 vardat = get_dat_func(line.strip().split())
-                string = "{}\t{}\t{}\t{}".format("chr"+vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3])) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n"
+                string = "{}\t{}\t{}\t{}".format(chrord[vardat[0]] if vardat[0] in chrord else vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3])) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n"
                 out.write(string)
 
     #change working dir to args.out so i don't have to move errors and variants_lifted
     os.chdir(args.out)
-    cmd = f"{args.scripts_path}liftOver  {tmp_bed.name} {args.chainfile} variants_lifted errors"
+    cmd = f"{args.scripts_path}liftOver {tmp_bed.name} {args.chainfile} variants_lifted errors"
     print(cmd)
     subprocess.run(shlex.split(cmd))
     with open('errors', 'r') as errs:
@@ -80,7 +85,7 @@ def lift(args):
             err_count+=1
 
         if(err_count>0):
-            print(f'WARNING. {int(err_count/2)} variants could not be correctly lifter. Consult file {args.out+"/" if args.out else ""}errors for details')
+            print(f'WARNING. {int(err_count/2)} variants could not be correctly lifted. Consult file {args.out+"/" if args.out else ""}errors for details')
 
     #if args.sep:
         # easyoptions seem not to be able handle 5 switched ?!?!? not implemented
@@ -117,7 +122,7 @@ if __name__=='__main__':
     if args.var and args.var.isdigit():
         args.var = int(args.var)
         args.numerical = True
-    if args.info and  all(elem.isdigit() for elem in args.info):
+    if args.info and all(elem.isdigit() for elem in args.info):
         args.info = list(map(int,args.info))
         args.numerical = True
 
