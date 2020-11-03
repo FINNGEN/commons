@@ -81,7 +81,8 @@ def lift(args):
 
     #change working dir to args.out so i don't have to move errors and variants_lifted
     os.chdir(args.out)
-    cmd = f"{args.scripts_path}liftOver {tmp_bed.name} {args.chainfile} variants_lifted errors"
+    liftover = f"{os.path.join(args.scripts_path,'liftOver')}"
+    cmd = f"{liftover} {tmp_bed.name} {args.chainfile} variants_lifted errors"
     print(cmd)
     subprocess.run(shlex.split(cmd))
     with open('errors', 'r') as errs:
@@ -132,6 +133,6 @@ if __name__=='__main__':
         args.info = list(map(int,args.info))
         args.numerical = True
 
-    args.scripts_path = '/'.join(os.path.realpath(__file__).split('/')[:-1]) + '/'
+    args.scripts_path = os.path.dirname(os.path.realpath(__file__))
     args.file = os.path.abspath(args.file)
     lift(args)
