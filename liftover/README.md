@@ -9,6 +9,7 @@ Scripts to lift over a sumstat file to any other build through a chainfile.
 
 ```
 usage: lift.py [-h] --chainfile CHAINFILE [-o OUT] [--sep SEP]
+               [--temp_dir TEMP_DIR] [--chr_as_is]
                (--info chr pos ref alt | --var snpid snp_sep)
                file
 
@@ -25,6 +26,9 @@ optional arguments:
                         Chain file for liftover
   -o OUT, --out OUT     Folder where to save the results
   --sep SEP             column separator in file to be lifted. Default tab
+  --temp_dir TEMP_DIR   Temp dir location
+  --chr_as_is           Do not convert chromosome names to numbers in final
+                        output
   --info chr pos ref alt
                         Name of columns
   --var snpid snp_sep   Column name of snpid and separator
