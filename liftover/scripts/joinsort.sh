@@ -11,6 +11,7 @@
 ##     --alt=VALUE
 ##     --tmp=VALUE      Specify tmp directory location for sorting and joining...
 ##     --chr_as_is      Don't convert chromosome names to numeric
+##     --no_duplicates  Don't report duplicates
 
 
 
@@ -64,6 +65,13 @@ else
     | sort $temploc -t$'\t' -V -k $((cols+1)),$((cols+1)) -k $((cols+2)),$((cols+2)) \
     | awk -v anew_chr=$anew_chr -v chr=$chr_as_is 'BEGIN{ FS="\t"; OFS="\t"} NR==1{ print $0,"REF","ALT"} NR>1{ split($1,a,":"); if(chr!="yes"){ gsub("chr", "", $anew_chr); gsub("X", "23", $anew_chr); gsub("Y", "24", $anew_chr); gsub("M", "25", $anew_chr) } print $0,a[3],a[4] } ' \
     | bgzip > $(basename $inputfile)".lifted.gz"
+fi
+
+if [[ ! -n "$no_duplicates" ]]
+then
+    echo "Finding duplicated variants"
+    zcat $(basename $inputfile)".lifted.gz" \
+    | awk -v anew_chr=$anew_chr '{if (x[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)]) { x_count[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)]++; print $0; if (x_count[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)] == 1) { print x[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)] } } x[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)] = $0}' > duplicated_lifted.tsv
 fi
 
 tabix -s $((cols+1)) -b $((cols+2)) -e $((cols+2)) $(basename $inputfile)".lifted.gz"

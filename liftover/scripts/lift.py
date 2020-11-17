@@ -101,6 +101,9 @@ def lift(args):
     if args.chr_as_is:
         joinsortargs = f"{joinsortargs} --chr_as_is"
 
+    if args.no_duplicates:
+        joinsortargs = f"{joinsortargs} --no_duplicates"
+
     joinsort = f"{os.path.join(args.scripts_path,'joinsort.sh')}"
     subprocess.run(shlex.split(f"chmod +x {joinsort}"))
     joincmd = f"{joinsort} {args.file} variants_lifted {joinsortargs}"
@@ -116,6 +119,7 @@ if __name__=='__main__':
     parser.add_argument("--sep", help="column separator in file to be lifted. Default tab", default='\t', required=False)
     parser.add_argument('--temp_dir', help='Temp dir location', required=False)
     parser.add_argument('--chr_as_is', action='store_true', help='Do not convert chromosome names to numbers in final output')
+    parser.add_argument('--no_duplicates', action='store_true', help='Do not report duplicates created by liftOver')
     group = parser.add_mutually_exclusive_group(required = True)
     group.add_argument('--info',nargs =4, metavar = ('chr','pos','ref','alt'), help = 'Name of columns')
     group.add_argument("--var",nargs = 2,help ="Column name of snpid and separator",metavar = ('snpid','snp_sep'))
