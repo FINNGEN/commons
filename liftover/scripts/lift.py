@@ -69,7 +69,7 @@ def lift(args):
 
         if args.temp_dir:
             tmp_bed = NamedTemporaryFile(dir=args.temp_dir, delete=True)
-            joinsortargs = f"{joinsortargs} --tmp {args.temp_dir}"
+            joinsortargs = f"{joinsortargs} --tmp={args.temp_dir}"
         else:
             tmp_bed = NamedTemporaryFile(delete=True)
 
