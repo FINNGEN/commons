@@ -1,0 +1,4 @@
+{
+    "qctool_snpstats.bgenlistfile": "gs://r5_data/geno/chip/bgen/R5_chipd_bgen_af_0.1.txt",
+    "qctool_snpstats.combine.outfile": "R5_chip_snpstats.gz"
+}

@@ -1,7 +1,7 @@
 {
-  "scrape_annots.vcfs": "gs://r4_data/R4_vcf.txt",
+  "scrape_annots.vcfs": "gs://r7_data/R7_vcf_v0.txt",
   "scrape_annots.cpu": "2",
   "scrape_annots.memory": "8G",
   "scrape_annots.external_annot": "gs://r3_data/annotations/R3_vep_annot.tsv.gz",
-  "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.2"
+  "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.6"
 }
