@@ -5,7 +5,6 @@ task join_annot {
 	File? external_annot
 	Int local_disk=500
   	String docker
-  	String? outputfile
 
 	runtime {
 		docker: "${docker}"
@@ -32,11 +31,6 @@ task join_annot {
             tabix -b 3 -e 3 -s 2 annotated_variants.gz
 		fi
 
-	    if [[ -n "${outputfile}" ]]; then
-	      gsutil cp annotated_variants.gz ${outputfile}
-	      gsutil cp annotated_variants.gz.tbi ${outputfile}".tbi"
-	    fi
-
 	>>>
 
 
@@ -50,10 +44,10 @@ task join_annot {
 }
 
 task extract {
-	File vcf
+
+    File vcf
 	Int local_disk=200
   	String docker
-
     String outfile=basename(vcf) + ".annot.gz"
 
 
@@ -65,7 +59,48 @@ task extract {
 	}
 
 	command <<<
-        scrape_vcf_info.py ${vcf} ${outfile}
+
+        python3 <<EOF
+
+        import gzip
+        import re
+
+        def read_info_fields(file):
+            fields = []
+            for line in file:
+                if line.startswith("#CHROM"):
+                    break
+                if line.startswith("##INFO=<"):
+                    line = line.rstrip("\n").replace(', ', '-') # next line splits on commas also within Description so avoid breaking
+                    dat = { elem[0]:elem[1] for elem in map(lambda x: x.split("="), re.sub("^##INFO=<|>$","",line).split(",")) }
+                    fields.append(dat)
+
+            return fields
+
+        with open('${outfile}', 'w') as out:
+            with gzip.open('${vcf}',mode='rt') as infile:
+                fields = read_info_fields(infile)
+                fields.sort( key=lambda x: x["ID"]  )
+
+                items = map(lambda x: x["ID"], fields )
+
+                out.write( "variant\tchr\tpos\t" + "\t".join(items) + "\n" )
+
+                for line in infile:
+                    dat = line.split("\t")[0:8]
+                    var = dat[0] + "_" + dat[1] + "_" + dat[3] + "_" + dat[4]
+                    info = { d[0]:(d[1] if len(d)>1 else "") for d in list(map(lambda x: x.split("="), dat[7].split(";")) ) }
+
+                    def getdat( elem, info):
+                        if elem["Type"]=="Flag":
+                            return "1" if elem["ID"] in info else "0"
+                        else:
+                            return info[elem["ID"]] if elem["ID"] in info else "NA"
+
+                    out.write( var + "\t" + dat[0] + "\t" + dat[1] + "\t" + "\t".join([  getdat(elem, info) for elem in fields  ] ) + "\n")
+
+        EOF
+
 	>>>
 
 	output {
@@ -88,7 +123,6 @@ workflow scrape_annots {
 	## join external annotation already in the extract for speed!!
 
 	File? external_annot
-	String? outputfile
 
 	scatter(file in files) {
 		call extract {
@@ -100,8 +134,7 @@ workflow scrape_annots {
 	call join_annot {
 		input: files=extract.out,
 		external_annot=external_annot,
-    	docker=docker,
-    	outputfile=outputfile
+    	docker=docker
 	}
 
 }
