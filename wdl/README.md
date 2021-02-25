@@ -1,5 +1,10 @@
 # WDLs unrelated to any specific project
 
+[wdl/plink_grm.wdl](wdl/plink_grm.wdl)
+creates an LD-pruned genotype dataset we use for GRM calculation with SAIGE  
+input: per-chromosome Plink .bed datasets (FinnGen release Plink files), list of high-quality variants to use, list of samples to be included (so we can subset e.g. population outliers out), max genotype missingess, MAF threshold, LD pruning parameters, output filename  
+output: An LD-pruned Plink .bed dataset with high quality variants only
+
 [filter_gwas.wdl](wdl/filter_gwas.wdl)  
 filters a GWAS summary stat file by allele frequency  
 input: a list of .gz summary stats, AF column name, min AF  
