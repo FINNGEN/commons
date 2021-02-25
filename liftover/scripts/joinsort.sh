@@ -71,7 +71,16 @@ if [[ ! -n "$no_duplicates" ]]
 then
     echo "Finding duplicated variants"
     zcat $(basename $inputfile)".lifted.gz" \
-    | awk -v anew_chr=$anew_chr '{if (x[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)]) { x_count[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)]++; print $0; if (x_count[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)] == 1) { print x[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)] } } x[$anew_chr$($anew_chr+1)$($anew_chr+2)$($anew_chr+3)] = $0}' > duplicated_lifted.tsv
+    | awk -v anew_chr=$anew_chr '
+    {
+        variant=$anew_chr"_"$(anew_chr+1)"_"$(anew_chr+2)"_"$(anew_chr+3)
+        variant_line=$0
+        if (variant==prev_variant) {
+            printf "%s\n%s\n", prev_variant_line, variant_line
+        }
+        prev_variant=variant
+        prev_variant_line=variant_line
+    }' > duplicated_lifted.tsv
 fi
 
 tabix -s $((cols+1)) -b $((cols+2)) -e $((cols+2)) $(basename $inputfile)".lifted.gz"
