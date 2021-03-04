@@ -1,0 +1,5 @@
+{
+    "map_vcf.vcf_task.docker":"gcr.io/finngen-refinery-dev/bioinformatics:0.6",
+    "map_vcf.vcf_task.chrom_map":"CHROM_MAP_HERE",
+    "map_vcf.vcf_task.vcf_dl_link":"https://ftp.ncbi.nih.gov/snp/latest_release/VCF/GCF_000001405.38.gz"
+}
