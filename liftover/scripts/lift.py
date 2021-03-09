@@ -76,7 +76,7 @@ def lift(args):
         with open(tmp_bed.name, 'w') as out:
             for line in res:
                 vardat = get_dat_func(line.strip().split())
-                string = "{}\t{}\t{}\t{}".format(chrord[vardat[0]] if vardat[0] in chrord else vardat[0], str(int(vardat[1])-1), str(int(vardat[1]) + max(len(vardat[2]),len(vardat[3])) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n"
+                string = "{}\t{}\t{}\t{}".format(chrord[vardat[0]] if vardat[0] in chrord else vardat[0], str(int(float(vardat[1]))-1), str(int(float(vardat[1])) + max(len(vardat[2]),len(vardat[3])) -1), ":".join([vardat[0],vardat[1],vardat[2],vardat[3]])) + "\n"
                 out.write(string)
 
     #change working dir to args.out so i don't have to move errors and variants_lifted
