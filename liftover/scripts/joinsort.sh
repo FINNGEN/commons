@@ -53,7 +53,7 @@ then
     join -1 1 -2 3 -t$'\t' \
     <( $cat_cmd < "$inputfile" | awk -v chr=$chr -v pos=$pos -v ref=$ref -v alt=$alt 'BEGIN{OFS="\t"} NR==1{ print "#variant",$0 } NR>1{ print $chr":"$pos":"$ref":"$alt,$0 }' | sort -b -k 1,1 -t $'\t' $temploc ) \
     <( awk 'BEGIN{ OFS="\t"; print "anew_chr","anew_pos","#variant" }{ print $1,$2+1,$4}' $liftedfile | sort $temploc -t$'\t' -b -k 3,3 ) \
-    | sort $temploc -t$'\t' -V -k $((cols+1)),$((cols+1)) -k $((cols+2)),$((cols+2)) \
+    | (read -r; printf "%s\n" "$REPLY"; sort $temploc -t$'\t' -V -k $((cols+1)),$((cols+1)) -k $((cols+2)),$((cols+2))) \
     | awk -v anew_chr=$anew_chr -v chr=$chr_as_is 'BEGIN{ FS="\t"; OFS="\t"} NR==1{ print $0,"REF","ALT"} NR>1{ split($1,a,":"); if(chr!="yes"){ gsub("chr", "", $anew_chr); gsub("X", "23", $anew_chr); gsub("Y", "24", $anew_chr); gsub("M", "25", $anew_chr) } print $0,a[3],a[4] } ' \
     | bgzip > $(basename $inputfile)".lifted.gz"
 else
@@ -62,7 +62,7 @@ else
     join -1 1 -2 3 -t$'\t' \
     <( $cat_cmd < "$inputfile" | awk -v var=$var 'NR==1{ printf "#variant"; for(i=1;i<=NF; i++) if(i!=var) printf "\t"$i; printf "\n"; } NR>1{ printf $var; for(i=1;i<=NF; i++) if(i!=var) printf "\t"$i; printf "\n"; }' | sort -b -k 1,1 -t $'\t' $temploc ) \
     <( awk 'BEGIN{ OFS="\t"; print "anew_chr","anew_pos","#variant" }{ print $1,$2+1,$4}' $liftedfile | sort $temploc -t$'\t' -b -k 3,3 ) \
-    | sort $temploc -t$'\t' -V -k $((cols+1)),$((cols+1)) -k $((cols+2)),$((cols+2)) \
+    | (read -r; printf "%s\n" "$REPLY"; sort $temploc -t$'\t' -V -k $((cols+1)),$((cols+1)) -k $((cols+2)),$((cols+2))) \
     | awk -v anew_chr=$anew_chr -v chr=$chr_as_is 'BEGIN{ FS="\t"; OFS="\t"} NR==1{ print $0,"REF","ALT"} NR>1{ split($1,a,":"); if(chr!="yes"){ gsub("chr", "", $anew_chr); gsub("X", "23", $anew_chr); gsub("Y", "24", $anew_chr); gsub("M", "25", $anew_chr) } print $0,a[3],a[4] } ' \
     | bgzip > $(basename $inputfile)".lifted.gz"
 fi
