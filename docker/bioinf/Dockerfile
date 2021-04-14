@@ -6,15 +6,15 @@ LABEL maintainer="jkarjala@broadinstitute.org"
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-ARG HTSLIB_VER=1.10.2
-ARG BCFTOOLS_VER=1.10.2
-ARG R_VER=4.0.2
+ARG HTSLIB_VER=1.12
+ARG BCFTOOLS_VER=1.12
+ARG R_VER=4.0.5
 
 WORKDIR /tmp
 
 RUN apt-get update && apt-get upgrade --yes
 
-RUN apt-get install less datamash wget gawk curl lsb-core make gcc g++ cmake gfortran libreadline6-dev \
+RUN apt-get install vim emacs jq less datamash wget gawk curl lsb-core make gcc g++ cmake gfortran libreadline6-dev \
     libz-dev libbz2-dev liblzma-dev zlib1g-dev libpcre2-dev libpcre3-dev libssl-dev libcurl4-openssl-dev \
     libopenblas-dev default-jre unzip bzip2 libboost-all-dev \
     libpng-dev libcairo2-dev python3-pip libxml2-dev --yes

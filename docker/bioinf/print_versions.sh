@@ -15,5 +15,8 @@ tabix --version
 bgzip --version
 gawk --version
 datamash --version
+emacs --version
+vim --version
+jq --version
 pip3 list --format=freeze
 print_packages.R
