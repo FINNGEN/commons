@@ -1,6 +1,0 @@
-{
-  "liftover.resultfiles": "/Users/mitja/projects/finngen/ukbb_matching/testpipe",
-  "liftover.dolift.docker": "eu.gcr.io/finngen-refinery-dev/conv_dock:0.12",
-  "liftover.dolift.local_disk": "100",
-  "liftover.dolift.memory": "8"
-}
