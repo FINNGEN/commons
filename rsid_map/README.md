@@ -38,13 +38,8 @@ optional arguments:
   --gz                  Compress output file to gz
   --no-header           Flag to use when no header is present
   --metadata [METADATA [METADATA ...]], -m [METADATA [METADATA ...]]
-<<<<<<< HEAD
-                        columns required for parsing. Should be SNPID columns
-                        for to-chrompos and SNPID,A1,A2 to go to rsid
-=======
                         columns required for parsing. Should be SNPID,A1,A2 columns
                         for to-chrompos and SNPID for to-rsid
->>>>>>> master
   --columns [COLUMNS [COLUMNS ...]]
                         column that need to be kept, either numerical integers
                         or column names
@@ -52,8 +47,4 @@ optional arguments:
   --to-chrompos
 ```
 
-<<<<<<< HEAD
 This script takes `FILE` and outputs a new file, keeping the required `COLUMNS`. 
-=======
-This script takes `FILE` and outputs a new file, keeping the required `COLUMNS`. 
->>>>>>> master
