@@ -1,0 +1,3 @@
+{
+    "gnomad_extract_af.vcf_files": "gs://gnomad3/genomes_3.0/vcf.txt"
+}

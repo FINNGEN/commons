@@ -12,7 +12,7 @@ task filter_prune {
 
     command <<<
         plink2 \
-        --memory 40000 \
+        --memory 100000 \
         --allow-extra-chr \
         --snps-only \
         --bfile ${sub(bedfile, ".bed$", "")} \
@@ -24,7 +24,7 @@ task filter_prune {
         --make-bed \
         --out ${out} && \
         plink2 \
-        --memory 40000 \
+        --memory 100000 \
         --allow-extra-chr \
         --bfile ${out} \
         --extract ${out}.prune.in \
@@ -45,9 +45,10 @@ task filter_prune {
 
     # R4 chr1 original plink file is 56G
     # R4 chr1 required 26G RAM in LD pruning
+    # wdl run showed that size of the file / 2 is not enough RAM for small chromosomes
     runtime {
-        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.3"
-        memory: "42 GB"
+        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.6"
+        memory: ceil(size(bedfile, "G")) + " GB"
         disks: "local-disk 200 HDD"
         preemptible: 0
     }
@@ -82,9 +83,9 @@ task merge_plink {
     }
 
     runtime {
-        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.3"
+        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.6"
         memory: "8 GB"
-        disks: "local-disk 100 HDD"
+        disks: "local-disk 200 HDD"
         preemptible: 0
     }
 }

@@ -1,0 +1,5 @@
+{
+    "split_bgen.bgen_files_loc": "gs://path_to_bgen_list.txt",
+    "split_bgen.split.n_variants_per_chunk_approx": 100000,
+    "split_bgen.split.docker": "gcr.io/finngen-refinery-dev/bioinformatics:0.6"
+}
