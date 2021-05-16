@@ -108,10 +108,10 @@ if __name__=='__main__':
 
     args = parser.parse_args()
 
-    args.var,args.var_sep = args.var
     # checks if var/info are numerical or strings
     args.numerical = False
     if args.var and args.var.isdigit():
+        args.var,args.var_sep = args.var
         args.var = int(args.var)
         args.numerical = True
     if args.info and  all(elem.isdigit() for elem in args.info):
