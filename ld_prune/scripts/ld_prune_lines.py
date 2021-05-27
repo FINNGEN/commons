@@ -16,15 +16,17 @@ from io import TextIOBase
 
 def get_ld_vars( chrom, pos, ref, alt, r2, ld_w, retries=5):
     snooze=2
+    snooze_multiplier = 2
     print("requesting LD")
     api="http://api.finngen.fi/api/ld?variant={}:{}:{}:{}&panel=sisu3&window={}&r2_thresh={}"
     url = api.format(chrom,pos,ref,alt,ld_w,r2)
     r = requests.get(url)
     while r.status_code!=200 or retries>0:
+        retries-=1
         if r.status_code!=200:
             print("Error requesting ld for url {}. Error code: {}".format(url, r.status_code) ,file=sys.stderr)
             time.sleep(snooze)
-        retries-=1
+            snooze = snooze * snooze_multiplier
         r = requests.get(url)
 
     if r.status_code!=200:
@@ -41,14 +43,11 @@ class Hit:
         '''
             Args: data row data with keys are the column names and values. Dictionary will be stored and data returned in original order
         '''
-
-
         self.chrom = chrom
         self.pos = pos
         self.ref = ref
         self.alt = alt
         self.variant = f'{chrom}_{pos}_{ref}_{alt}'
-
         self.priority = priority
 
         gettable = [ t for t in data.items() ]
