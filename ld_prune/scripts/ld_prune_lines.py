@@ -17,11 +17,12 @@ from io import TextIOBase
 def get_ld_vars( chrom, pos, ref, alt, r2, ld_w, retries=5):
     snooze=2
     snooze_multiplier = 2
-    print("requesting LD")
+
     api="http://api.finngen.fi/api/ld?variant={}:{}:{}:{}&panel=sisu3&window={}&r2_thresh={}"
     url = api.format(chrom,pos,ref,alt,ld_w,r2)
+    print(f'requesting LD {url}')
     r = requests.get(url)
-    while r.status_code!=200 or retries>0:
+    while r.status_code!=200 and retries>0:
         retries-=1
         if r.status_code!=200:
             print("Error requesting ld for url {}. Error code: {}".format(url, r.status_code) ,file=sys.stderr)
@@ -32,7 +33,6 @@ def get_ld_vars( chrom, pos, ref, alt, r2, ld_w, retries=5):
     if r.status_code!=200:
         raise Exception("LD server response failed for {} attempts".format(retries) )
 
-    print("got LD")
     return(r.json())
 
 Hit = namedtuple('Hit', 'var, chrom, pos, ref, alt, priority, data')
@@ -137,7 +137,8 @@ class Cluster(object):
             if vi in self.hit_cache:
                 self.removed[vi]=""
                 rm_hits.extend(self.hit_cache[vi])
-                del self.hit_cache.pop[var_id]
+                del self.hit_cache[vi]
+
         self.n_hits-=len(rm_hits)
 
         return rm_hits
@@ -233,11 +234,11 @@ def prune_cluster(cl:Cluster, r2:float) ->list[tuple[Hit,list[Hit]]]:
 
         ld = get_ld_vars(top.chrom, top.pos, top.ref, top.alt, r2, max(100000,  max(100000, abs(top.pos-cl.boundaries[0]) + 100, abs(top.pos-cl.boundaries[1])+ 100 ) )  )
         varid = ":".join( [top.chrom,str(top.pos),top.ref,top.alt] )
-        ldvars = [ ldv["variation2"].replace(":","_") for ldv in ld["ld"] if ldv["variation2"]!=varid]
+        ldvars = [ "chr" + ldv["variation2"].replace(":","_") for ldv in ld["ld"] if ldv["variation2"]!=varid]
 
         removed = cl.remove_hits( ldvars )
         removed.extend(worse_same)
-        print(f'merged: {len(removed)} hits to top')
+        print(f'merged: {len(removed)} hits to top. Top: {top.varid}, removed {[ h.varid for h in removed]}')
         redhit+=1
         outdat.append( (top, removed) )
 
