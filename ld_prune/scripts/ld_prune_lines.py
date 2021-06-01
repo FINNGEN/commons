@@ -14,7 +14,7 @@ from queue import PriorityQueue
 
 from io import TextIOBase
 
-from typing import dict, tuple, list, OrderedDict, Dict, Iterator
+from typing import Tuple, List, OrderedDict, Dict, Iterator
 
 
 
@@ -22,7 +22,7 @@ def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, retri
     snooze=2
     snooze_multiplier = 2
 
-    url = f"http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel=sisu3&window={ld_w}&r2_thresh={r2}'
+    url = f'http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel=sisu3&window={ld_w}&r2_thresh={r2}'
     print(f'requesting LD {url}')
     r = requests.get(url)
     retries_left = retries
