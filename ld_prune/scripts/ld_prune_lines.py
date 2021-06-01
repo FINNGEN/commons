@@ -14,16 +14,20 @@ from queue import PriorityQueue
 
 from io import TextIOBase
 
-def get_ld_vars( chrom, pos, ref, alt, r2, ld_w, retries=5):
+from typing import dict, tuple, list, OrderedDict, Dict, Iterator
+
+
+
+def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, retries:int=5) -> Dict[str,str]:
     snooze=2
     snooze_multiplier = 2
 
-    api="http://api.finngen.fi/api/ld?variant={}:{}:{}:{}&panel=sisu3&window={}&r2_thresh={}"
-    url = api.format(chrom,pos,ref,alt,ld_w,r2)
+    url = f"http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel=sisu3&window={ld_w}&r2_thresh={r2}'
     print(f'requesting LD {url}')
     r = requests.get(url)
-    while r.status_code!=200 and retries>0:
-        retries-=1
+    retries_left = retries
+    while r.status_code!=200 and retries_left>0:
+        retries_left-=1
         if r.status_code!=200:
             print("Error requesting ld for url {}. Error code: {}".format(url, r.status_code) ,file=sys.stderr)
             time.sleep(snooze)
@@ -35,11 +39,10 @@ def get_ld_vars( chrom, pos, ref, alt, r2, ld_w, retries=5):
 
     return(r.json())
 
-Hit = namedtuple('Hit', 'var, chrom, pos, ref, alt, priority, data')
 
 class Hit:
 
-    def __init__(self, chrom, pos, ref, alt, priority, data: OrderedDict):
+    def __init__(self, chrom:str, pos:int, ref:str, alt:str, priority:float, data: OrderedDict):
         '''
             Args: data row data with keys are the column names and values. Dictionary will be stored and data returned in original order
         '''
@@ -75,7 +78,7 @@ class Hit:
         return other.data==self.data
 
 
-def read_hit(f, h:OrderedDict, args):
+def read_hit(f, h:OrderedDict, args) -> Iterator[Hit]:
     '''
         Args:
         h: header name to index dict in the order they are in the file
@@ -149,7 +152,7 @@ class Cluster(object):
     def empty(self) -> bool:
         return self.n_hits==0
 
-    def get_best(self)-> (Hit, list[Hit]):
+    def get_best(self)-> (Hit, List[Hit]):
         """
             returns best hit in first element and all other hits in the same variant in second element and removes
             all of them from cluster
@@ -202,7 +205,7 @@ class Cluster(object):
                 )
 
 
-def prune_cluster(cl:Cluster, r2:float) ->list[tuple[Hit,list[Hit]]]:
+def prune_cluster(cl:Cluster, r2:float) ->List[Tuple[Hit,List[Hit]]]:
     '''
         Takes cluster and prunes by LD of Hits in cluster, retaining the top in in the clustered
         Args:
