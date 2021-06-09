@@ -11,6 +11,9 @@ task join_annot {
 		memory:"8G"
 		disks: "local-disk ${local_disk} SSD"
 		cpu:"1"
+		zones: "europe-west1-b europe-west1-c europe-west1-d"
+        preemptible: 1
+        noAddress: true
 	}
 
 	command <<<
@@ -56,6 +59,9 @@ task extract {
 		memory:"2G"
 		disks: "local-disk ${local_disk} SSD"
 		cpu:"1"
+		zones: "europe-west1-b europe-west1-c europe-west1-d"
+        preemptible: 1
+        noAddress: true
 	}
 
 	command <<<
@@ -116,8 +122,6 @@ workflow scrape_annots {
 	Array[String] files = read_lines(vcfs)
 
 	String docker
-	String memory= "3GB"
-	Int cpu = 1
 
 	## write readme and specify annot: output will be in the same order as input files.... external annot will be matched by first col. id chr:pos:ref:alt
 	## join external annotation already in the extract for speed!!
