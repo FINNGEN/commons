@@ -1,27 +1,22 @@
 #!/usr/bin/env python3
 import argparse
 import gzip
-import requests
 import sys
 import time
+import requests
 
 from functools import partial
 from collections import namedtuple
 from collections import defaultdict
 from collections import OrderedDict
-
 from queue import PriorityQueue
-
 from io import TextIOBase
-
 from typing import Tuple, List, OrderedDict, Dict, Iterator
-
-
 
 def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, retries:int=5) -> Dict[str,str]:
     snooze=2
     snooze_multiplier = 2
-
+    max_snooze=256
     url = f'http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel=sisu3&window={ld_w}&r2_thresh={r2}'
     print(f'requesting LD {url}')
     r = requests.get(url)
@@ -31,7 +26,8 @@ def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, retri
         if r.status_code!=200:
             print("Error requesting ld for url {}. Error code: {}".format(url, r.status_code) ,file=sys.stderr)
             time.sleep(snooze)
-            snooze = snooze * snooze_multiplier
+            snooze = min(snooze * snooze_multiplier, max_snooze)
+
         r = requests.get(url)
 
     if r.status_code!=200:
@@ -67,9 +63,11 @@ class Hit:
     def data(self):
         return self.linedata
 
+    def __str__(self):
+        return self.variant
+
     def __getitem__(self,key):
         return self.gettable[key]
-
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -77,19 +75,24 @@ class Hit:
     def __eq__(self, other):
         return other.data==self.data
 
+    def __lt__(self, other):
+        self.priority < other.priority
+
+    def __gt__(self, other):
+        self.priority > other.priority
 
 def read_hit(f, h:OrderedDict, args) -> Iterator[Hit]:
     '''
         Args:
         h: header name to index dict in the order they are in the file
     '''
-
+    line=2
     while True:
         l = f.readline()
         if l =="":
             break
 
-        dat = l.strip().split("\t")
+        dat = l.strip("\n").split("\t")
 
         chrom = dat[h[args.chromcol]]
         chrom = chrom if chrom.startswith("chr") else "chr"+chrom
@@ -99,9 +102,13 @@ def read_hit(f, h:OrderedDict, args) -> Iterator[Hit]:
         ref = dat[h[args.refcol]]
         alt = dat[h[args.altcol]]
 
-        data = OrderedDict([ (k,dat[v]) for (k,v) in h.items()])
+        if(len(dat)!=len(h.keys())):
+            raise Exception(f'Not enought elements in line {line}, excepted {len(h.keys())} observed {len(dat)}')
 
+        data = OrderedDict([ (k,dat[v]) for (k,v) in h.items()])
+        line+=1
         yield Hit(chrom, pos,ref, alt, priority, data)
+
 
 
 
@@ -121,7 +128,6 @@ class Cluster(object):
         if self.n_hits == 0:
             self.start = hit.pos
 
-        print(hit.varid)
         self.hit_cache[ hit.varid ].append(hit)
         self.end = hit.pos
         self.hits.put( (hit.priority, hit) )
@@ -205,16 +211,18 @@ class Cluster(object):
                 )
 
 
-def prune_cluster(cl:Cluster, r2:float) ->List[Tuple[Hit,List[Hit]]]:
+def prune_cluster(cl:Cluster, r2:float, n_retry:int) ->List[Tuple[Hit,List[Hit]]]:
     '''
         Takes cluster and prunes by LD of Hits in cluster, retaining the top in in the clustered
         Args:
             cl:
             r2: threshold above which to cluster Hits
+            n_retry: number of times to retry error in ld server
         Returns: list of tuples where first element is the lead Hit of the cluster and second is list of clustered Hits
     '''
 
     if cl.size()==1:
+        print("size 0")
         return [(cl.get_best()[0],[])]
     ### self.queue[0]
     outdat=[]
@@ -226,6 +234,7 @@ def prune_cluster(cl:Cluster, r2:float) ->List[Tuple[Hit,List[Hit]]]:
         worse_same = best[1]
         top = best[0]
 
+        print(f'Current {top}')
         if top is None:
             return outdat
 
@@ -235,11 +244,13 @@ def prune_cluster(cl:Cluster, r2:float) ->List[Tuple[Hit,List[Hit]]]:
             outdat.append( (top, worse_same ))
             return outdat
 
-        ld = get_ld_vars(top.chrom, top.pos, top.ref, top.alt, r2, max(100000,  max(100000, abs(top.pos-cl.boundaries[0]) + 100, abs(top.pos-cl.boundaries[1])+ 100 ) )  )
+        ld = get_ld_vars(top.chrom, top.pos, top.ref, top.alt, r2,
+            max(100000,  max(100000, abs(top.pos-cl.boundaries[0])*2, abs(top.pos-cl.boundaries[1])*2 ) ), retries=n_retry )
         varid = ":".join( [top.chrom,str(top.pos),top.ref,top.alt] )
         ldvars = [ "chr" + ldv["variation2"].replace(":","_") for ldv in ld["ld"] if ldv["variation2"]!=varid]
 
         removed = cl.remove_hits( ldvars )
+        print(f"removed {removed}")
         removed.extend(worse_same)
         print(f'merged: {len(removed)} hits to top. Top: {top.varid}, removed {[ h.varid for h in removed]}')
         redhit+=1
@@ -249,7 +260,8 @@ def prune_cluster(cl:Cluster, r2:float) ->List[Tuple[Hit,List[Hit]]]:
 
 def write_cluster(pruned:list[tuple[Hit,list[Hit]]], outcols:list[str] ,out:TextIOBase):
     for h in pruned:
-        out.write("\t".join(h[0].data) + "\t" + ",".join([ "_".join([pr[c] for c in outcols]) for pr in h[1] ]) + "\n")
+
+        out.write("\t".join(h[0].data) + "\t" + ",".join([ ";".join([pr[c] for c in outcols]) for pr in h[1] ]) + "\n")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -260,6 +272,7 @@ if __name__ == '__main__':
     parser.add_argument('-poscol', default="pos")
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
+    parser.add_argument('-n_retries_ld', type=int, default=5)
     parser.add_argument('-ld', default=0.5)
     parser.add_argument('-ld_w', default=500000, help='How close hits are first clustered together for LD based pruning. Cluster region can become larger as this is between adjacent hits.')
     parser.add_argument('-prune_column_list', default="phenocode", help="Comma separated list of column names that will be printed out in the last column where pruned endpoints are listed")
@@ -274,7 +287,6 @@ if __name__ == '__main__':
             args.poscol, args.chromcol, args.refcol, args.altcol]
 
         pruned_cols = args.prune_column_list.split(",")
-
         reqs.extend(pruned_cols)
         missing = [r for r in reqs if not r in h]
         if len(missing)>0:
@@ -296,6 +308,7 @@ if __name__ == '__main__':
             for hit in nexthit:
                 ## read cluster of hits and take top one and remove all in LD.....
                 ## spit to top and removed and continue until cluster empty
+
                 if n_vars % progress_rep_step == 0 and n_vars>0:
                    print("Retrieved LD for {} variants".format( n_vars) ,file=sys.stderr)
                 if (hit.chrom != last_hit.chrom and hit.chrom in seen_chroms) or (hit.chrom == last_hit.chrom and hit.pos < last_hit.pos):
@@ -303,7 +316,7 @@ if __name__ == '__main__':
 
                 if hit.chrom != last_hit.chrom or hit.pos-last_hit.pos > args.ld_w:
                     print("#### starting prune cluster")
-                    pruned = prune_cluster(cluster, args.ld)
+                    pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld)
                     print(f'#### Cluster pruned to {len(pruned)} hits')
                     write_cluster(pruned,pruned_cols, out)
                     cluster.clear()
@@ -311,14 +324,13 @@ if __name__ == '__main__':
                 hits_proc+=1
                 if hits_proc % progress_rep == 0:
                     print(f'{hits_proc} hits processed!')
-
                 cluster.add_hit(hit)
                 last_hit = hit
 
 
             if cluster.size()>0:
                 # write last cluster not pruned yet
-                print("#### starting prune cluster")
-                pruned = prune_cluster(cluster, args.ld)
+                print(f"#### starting prune cluster {cluster}")
+                pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld)
                 print(f'#### Cluster pruned to {len(pruned)} hits')
                 write_cluster(pruned,pruned_cols, out)
