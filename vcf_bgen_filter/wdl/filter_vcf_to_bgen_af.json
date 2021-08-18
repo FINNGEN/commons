@@ -1,0 +1,5 @@
+{
+    "filter_vcf_to_bgen.files_to_conv": "gs://r7_data/chip/R7_chip_vcf.txt",
+    "filter_vcf_to_bgen.af": 0.1,
+    "filter_vcf_to_bgen.combine.outfile": "R7_chip_af_0.1.bgen"
+}
