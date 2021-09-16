@@ -13,7 +13,7 @@ from queue import PriorityQueue
 from io import TextIOBase
 from typing import Tuple, List, OrderedDict, Dict, Iterator
 from scipy.stats import chi2
-
+import math
 
 def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, retries:int=5) -> Dict[str,str]:
     snooze=2
@@ -119,8 +119,8 @@ class Cluster(object):
         self.hits = PriorityQueue()
         self.hit_cache=defaultdict(list)
 
-        self.start = float(inf)
-        self.end = float(-inf)
+        self.start = float('inf')
+        self.end = -float('inf')
         self.n_hits = 0
         self.removed = {}
         self.peak_priority = float('inf')
@@ -234,8 +234,8 @@ class Cluster(object):
 
     def clear(self):
         self.hits = PriorityQueue()
-        self.start = 0
-        self.end = 0
+        self.start = float('inf')
+        self.end = -float('inf')
         self.n_hits = 0
         self.hit_cache=defaultdict(list)
         self.removed = {}
