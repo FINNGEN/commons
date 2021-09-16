@@ -119,8 +119,8 @@ class Cluster(object):
         self.hits = PriorityQueue()
         self.hit_cache=defaultdict(list)
 
-        self.start =0
-        self.end =0
+        self.start = float(inf)
+        self.end = float(-inf)
         self.n_hits = 0
         self.removed = {}
         self.peak_priority = float('inf')
@@ -133,15 +133,16 @@ class Cluster(object):
 
         self.hit_cache[ hit.varid ].append(hit)
         self.hits.put( (hit.priority, hit) )
+
+        if hit.pos > self.end:
+            self.end = hit.pos
+
+        if hit.pos < self.start:
+            self.start = hit.pos
+
         self.n_hits += 1
 
-        if self.n_hits == 0:
-            self.start = hit.pos
-            self.end = hit.pos
-        elif hit.pos > self.end:
-            self.end = hit.pos
-        elif hit.pos < self.start:
-            self.start = hit.pos
+
 
 
     @property
@@ -151,8 +152,8 @@ class Cluster(object):
     def width(self):
         return self.end - self.start
 
-    def remove_hits(self, var_ids:list[tuple[str,float]], r2:float, chisqtop:float, obs_exp_chi2_thr=None,
-                        clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None ) -> list[Hit]:
+    def remove_hits(self, var_ids:List[Tuple[str,float]], r2:float, chisqtop:float, obs_exp_chi2_thr=None,
+                        clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None ) -> List[Hit]:
         """
             Removes variants in cluster if r2 is higher than threshold or if observed chisq is attributable to
             stronger variants chisq
@@ -221,7 +222,7 @@ class Cluster(object):
 
         return (b,merged)
 
-    def get_all(self) -> list[Hit]:
+    def get_all(self) -> List[Hit]:
         hits = []
         while not self.empty():
             h = self.get_best()
@@ -316,7 +317,7 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, clump_expected_chisq:float=
 
     return outdat
 
-def write_cluster(pruned:list[tuple[Hit,list[Hit]]], outcols:list[str] ,out:TextIOBase):
+def write_cluster(pruned:list[tuple[Hit,List[Hit]]], outcols:list[str] ,out:TextIOBase):
     for h in pruned:
         out.write("\t".join(h[0].data) + "\t" + ",".join([ ";".join([pr[c] for c in outcols]) for pr in h[1] ]) + "\n")
 
