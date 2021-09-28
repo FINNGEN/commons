@@ -13,3 +13,10 @@ Prepare configuration file by editing wdl/scrape.annot.wdl.json:
 **IMPORTANT: Give the scrape_annots.vcfs files in chromosomal order as the chunks are joined to a single file in given order.**
 
 Run wdl/scrape_annot.wdl with the prepared configuration file
+
+
+## Annotation variants with VEP/Hail
+
+First install hail `pip install hail` to install `hailctl` script.
+
+Check/modify arguments in scripts/run_vep_annotate.sh for examples how to run variant annotations.
