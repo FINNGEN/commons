@@ -1,0 +1,4 @@
+{
+    "filter_sumstats_by_variants.sumstats_loc":"{summary statistic list}",
+    "filter_sumstats_by_variants.filter.variant_file":"{allowed_variant_list}"
+}

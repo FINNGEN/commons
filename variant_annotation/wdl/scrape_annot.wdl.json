@@ -1,7 +1,5 @@
 {
-  "scrape_annots.vcfs": "gs://r7_data/R7_vcf_v0.txt",
-  "scrape_annots.cpu": "2",
-  "scrape_annots.memory": "8G",
-  "scrape_annots.external_annot": "gs://r3_data/annotations/R3_vep_annot.tsv.gz",
+  "scrape_annots.vcfs": "gs://fg-datateam-analysisteam-share/R7_datasets_with_SISUv4/R7_SISUv4_vcfs.txt",
+  "scrape_annots.external_annot": "gs://finngen_commons/annotations/R3_vep_annot.tsv.gz",
   "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.6"
 }
