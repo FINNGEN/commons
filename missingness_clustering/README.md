@@ -13,8 +13,8 @@ a = [1,1,1,1,0,0,1]
 b = [1,1,1,1,0,0,0]
 ```
 Then, missing samples are those that are in one or the other phenotype, but not in both. This can be efficiently calculated with XOR(a,b).
-To get a missingness ratio, the amount of missing samples (SUM(XOR(a,b))) can be divided with either 
-    a) the amount of samples common to both of the phenotypes, calculated efficiently with AND(a,b), or
+To get a missingness ratio, the amount of missing samples (SUM(XOR(a,b))) can be divided with either  
+    a) the amount of samples common to both of the phenotypes, calculated efficiently with AND(a,b), or  
     b) the amount of samples in either of the phenotypes, calculated with OR(a,b).  
 These would then be
 ```
