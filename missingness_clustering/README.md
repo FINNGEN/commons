@@ -4,8 +4,8 @@ Cluster phenotypes that have low missingness between them together. Required for
 
 ## Methods
 
-Missingness is calculated in one of two ways:
-### XOR/AND (default)
+### Missingness
+Missingness is calculated in one of two ways:  
 Given two phenotypes, a and b, with some samples not assigned to cases or controls, encode a sample being a case/control as 1 and not being either as 0.
 For example:
 ```
