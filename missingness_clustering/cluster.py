@@ -86,6 +86,7 @@ def calculate_missingness(data: np.ndarray, method: str) -> np.ndarray:
         xor_vec = np.sum(np.logical_xor(data[idx,:],data),axis=1)
         missingness_vec=xor_vec/div_vec
         out_matrix[idx,:]=missingness_vec
+    print()
     return out_matrix
 
 def cluster_phenotypes(missingness_matrix: np.ndarray, phenos: List[str], missingness_limit:float)->List[List[str]]:
@@ -120,7 +121,7 @@ def save_clusters(clusters:List[List[str]],fname:str):
             data = "\t".join(cluster)
             f.write(f"{data}\n")
 
-class resultCache():
+class ResultCache():
     """
     Implement simple cache for caching calculated missingness matrices
     """
@@ -180,7 +181,7 @@ if __name__ == "__main__":
     source_path = Path(__file__).resolve()
     source_dir = source_path.parent
 
-    cache = resultCache(source_dir)
+    cache = ResultCache(source_dir)
 
     
     phenos = load_phenos(pheno_file)
@@ -199,7 +200,7 @@ if __name__ == "__main__":
         missingness_matrix = calculate_missingness(cov,args.missingness_method)
 
     #store missingness matrix in cache
-    if not cache.in_cache(cachehash):
+    if (not cache.in_cache(cachehash)) or args.force:
         print("saving missingness matrix in cache...")
         cache.store_missingness(cachehash,missingness_matrix)
     #calculate clusters
