@@ -60,7 +60,7 @@ def load_covariate_matrix(fpath: str, phenotypes: List[str], nrows: Optional[int
     Returns:
         (np.ndarray): MXN array, where M is the number of phenotypes and N is the number of samples
     """
-    data = 1-pd.read_csv(fpath,sep="\t",usecols=phenotypes,nrows=nrows).isna().astype(np.int8)
+    data = 1-pd.read_csv(fpath,sep="\t",usecols=phenotypes,nrows=nrows)[phenotypes].isna().astype(np.int8)
     return data.values.T
 
 def calculate_missingness(data: np.ndarray, method: str) -> np.ndarray:
