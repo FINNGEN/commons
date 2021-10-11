@@ -1,4 +1,54 @@
 
+task join_annot_v4 {
+
+	Array[File] files
+	File? external_annot
+	Int local_disk=500
+  	String docker
+
+	runtime {
+		docker: "${docker}"
+		memory:"8G"
+		disks: "local-disk ${local_disk} SSD"
+		cpu:"1"
+		zones: "europe-west1-b europe-west1-c europe-west1-d"
+        preemptible: 1
+        noAddress: true
+	}
+
+	command <<<
+
+		if [[ -z "${external_annot}" ]]; then
+			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants.gz
+			tabix -S 2 -b 3 -e 3 -s 1 annotated_variants.gz
+		else
+			#sort VEP
+			vep_varcol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "variant"|cut -f 1)
+			vep_conscol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "most_severe"|cut -f 1)
+			vep_genecol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "gene_most_severe"|cut -f 1)
+			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -V -k 1,1)|bgzip > sorted_vep.gz
+			#sort annotation
+			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants_1.gz
+			cat <(zcat annotated_variants_1.gz|head -n1|awk 'BEGIN{ FS=OFS="\t"} { print "#"$0}')  <(zcat annotated_variants_1.gz|tail -n+2|awk 'BEGIN{ FS=OFS="\t"} {gsub("_",":",$1);gsub("chr","",$1);gsub("X","23",$1);gsub("Y","24",$1);gsub("MT","25",$1);gsub("M","25",$1);gsub("chr","",$2);gsub("X","23",$2);gsub("Y","24",$2);gsub("MT","25",$2);gsub("M","25",$2);print $0}'|sort -V -k 1,1 -T ./) |bgzip  > sorted_annotated.gz
+			#join
+			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz) |bgzip -@6 > annotated_variants.gz
+			tabix -b 3 -e 3 -s 2 annotated_variants.gz
+		fi
+
+	>>>
+
+
+
+	output {
+		File out="annotated_variants.gz"
+		File index="annotated_variants.gz.tbi"
+	}
+
+
+}
+
+
+
 task join_annot {
 
 	Array[File] files
@@ -135,7 +185,7 @@ workflow scrape_annots {
 		}
 	}
 
-	call join_annot {
+	call join_annot_v4 {
 		input: files=extract.out,
 		external_annot=external_annot,
     	docker=docker
