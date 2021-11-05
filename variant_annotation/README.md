@@ -20,3 +20,19 @@ Run wdl/scrape_annot.wdl with the prepared configuration file
 First install hail `pip install hail` to install `hailctl` script.
 
 Check/modify arguments in scripts/run_vep_annotate.sh for examples how to run variant annotations.
+
+
+## fetching rsids & HGVS protein annotations for variants
+
+use scripts/hgvsp_annotate.py
+
+### Installation
+```
+python3 -m pip install requests
+```
+
+### Usage
+
+```
+python3 scripts/hgsvp_annotate.py FILE COLUMN --out OUTPUT_FILENAME
+```
