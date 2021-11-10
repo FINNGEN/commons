@@ -28,7 +28,7 @@ use scripts/hgvsp_annotate.py
 
 ### Installation
 ```
-python3 -m pip install requests
+python3 -m pip install -r hgvs_requirements.txt
 ```
 
 ### Usage
