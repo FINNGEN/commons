@@ -1,5 +1,5 @@
 {
-  "scrape_annots.vcfs": "gs://fg-datateam-analysisteam-share/R7_datasets_with_SISUv4/R7_SISUv4_vcfs.txt",
+  "scrape_annots.vcfs": "gs://r8_data/r8_sisuv4_vcf_chromlist",
   "scrape_annots.external_annot": "gs://finngen-imputation-panel/sisu4/hail/sisu4_annot.tsv.gz",
   "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.6"
 }

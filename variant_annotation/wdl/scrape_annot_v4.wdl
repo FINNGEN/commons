@@ -17,11 +17,12 @@ task join_annot {
 	}
 
 	command <<<
-
+		#if there are no external annots, then just simply concat files
 		if [[ -z "${external_annot}" ]]; then
 			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants.gz
 			tabix -S 2 -b 3 -e 3 -s 1 annotated_variants.gz
 		else
+			#else sort VEP and annotation files in similar order, then join
 			#sort VEP
 			vep_varcol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "variant"|cut -f 1)
 			vep_conscol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "most_severe"|cut -f 1)
@@ -29,9 +30,9 @@ task join_annot {
 			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -V -k 1,1)|bgzip > sorted_vep.gz
 			#sort annotation
 			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants_1.gz
-			cat <(zcat annotated_variants_1.gz|head -n1|awk 'BEGIN{ FS=OFS="\t"} { print "#"$0}')  <(zcat annotated_variants_1.gz|tail -n+2|awk 'BEGIN{ FS=OFS="\t"} {gsub("_",":",$1);gsub("chr","",$1);gsub("X","23",$1);gsub("Y","24",$1);gsub("MT","25",$1);gsub("M","25",$1);gsub("chr","",$2);gsub("X","23",$2);gsub("Y","24",$2);gsub("MT","25",$2);gsub("M","25",$2);print $0}'|sort -V -k 1,1 -T ./) |bgzip  > sorted_annotated.gz
+			cat <(zcat annotated_variants_1.gz|head -n1)  <(zcat annotated_variants_1.gz|tail -n+2|sort -V -k 1,1 -T ./) |bgzip  > sorted_annotated.gz
 			#join
-			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz) |bgzip -@6 > annotated_variants.gz
+			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz) |bgzip  > annotated_variants.gz
 			tabix -b 3 -e 3 -s 2 annotated_variants.gz
 		fi
 
@@ -91,11 +92,11 @@ task extract {
 
                 items = map(lambda x: x["ID"], fields )
 
-                out.write( "variant\tchr\tpos\t" + "\t".join(items) + "\n" )
-
+                out.write( "#variant\tchr\tpos\tref\talt\t" + "\t".join(items) + "\n" )
+                chromsanitize = lambda c: c.replace("chr","").replace("X","23").replace("Y","24").replace("MT","25").replace("M","25")
                 for line in infile:
                     dat = line.split("\t")[0:8]
-                    var = dat[0] + "_" + dat[1] + "_" + dat[3] + "_" + dat[4]
+                    var = chromsanitize(dat[0]) + ":" + dat[1] + ":" + dat[3] + ":" + dat[4]
                     info = { d[0]:(d[1] if len(d)>1 else "") for d in list(map(lambda x: x.split("="), dat[7].split(";")) ) }
 
                     def getdat( elem, info):
@@ -104,7 +105,7 @@ task extract {
                         else:
                             return info[elem["ID"]] if elem["ID"] in info else "NA"
 
-                    out.write( var + "\t" + dat[0] + "\t" + dat[1] + "\t" + "\t".join([  getdat(elem, info) for elem in fields  ] ) + "\n")
+                    out.write( var + "\t" + chromsanitize(dat[0]) + "\t" + dat[1] + "\t" + dat[3] + "\t" + dat[4] + "\t" + "\t".join([  getdat(elem, info) for elem in fields  ] ) + "\n")
 
         EOF
 
