@@ -90,6 +90,8 @@ task convert2bcor {
 
         set -euxo pipefail
 
+        n_threads=`grep -c ^processor /proc/cpuinfo`
+        
         # ldstore v1.1
         ldstore --bgen ~{bgen} --variant-window-size ~{variant_window_size} --ld-thold ~{ld_thold} --accuracy ~{accuracy} --n-threads ${n_threads} --bcor ~{base}.bcor
         ldstore --bcor ~{base}.bcor --merge ${n_threads}
