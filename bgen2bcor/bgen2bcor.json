@@ -1,0 +1,12 @@
+{
+    "bgen2bcor.bgen": "gs://finngen-imputation-panel/sisu4/bgen/sisu4_bgen.bgen",
+    "bgen2bcor.split2chr.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.7",
+    "bgen2bcor.split2chr.cpu": "2",
+    "bgen2bcor.split2chr.mem": "16",
+    "bgen2bcor.convert2bcor.docker": "eu.gcr.io/finngen-refinery-dev/autorep:cb92bfc",
+    "bgen2bcor.convert2bcor.cpu": "64",
+    "bgen2bcor.convert2bcor.mem": "128",
+    "bgen2bcor.convert2bcor.variant_window_size": "2500000",
+    "bgen2bcor.convert2bcor.ld_thold": "0.05",
+    "bgen2bcor.convert2bcor.accuracy": "low"
+}
