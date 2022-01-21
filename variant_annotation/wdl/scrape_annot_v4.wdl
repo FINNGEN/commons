@@ -17,16 +17,33 @@ task join_annot {
 	}
 
 	command <<<
+		set -eux
+		#save headercheck to file
+		cat > headercheck.awk <<'CODE'
+		{
+		for(i = 1; i <= NF; i++) {
+			h[$i] = i
+			if($i==value){print i}
+		}
+		exists=value in h
+		if(!exists)
+		{
+			exit 1
+		}
+		exit 0
+		}
+		CODE
 		#if there are no external annots, then just simply concat files
 		if [[ -z "${external_annot}" ]]; then
 			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants.gz
 			tabix -S 2 -b 3 -e 3 -s 1 annotated_variants.gz
 		else
 			#else sort VEP and annotation files in similar order, then join
-			#sort VEP
-			vep_varcol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "variant"|cut -f 1)
-			vep_conscol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "most_severe"|cut -f 1)
-			vep_genecol=$(zcat ${external_annot}|head -n1|tr "\t" "\n"|grep -n "gene_most_severe"|cut -f 1)
+			
+			#headercheck: check that the column is in header, else abort with error 1
+			vep_varcol=$(zcat ${external_annot} |head -n1|awk -v value="variant" -F "\t" -f headercheck.awk)
+			vep_conscol=$(zcat ${external_annot}|head -n1|awk -v value="most_severe" -F "\t" -f headercheck.awk )
+			vep_genecol=$(zcat ${external_annot}|head -n1|awk -v value="gene_most_severe" -F "\t" -f headercheck.awk)
 			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -V -k 1,1)|bgzip > sorted_vep.gz
 			#sort annotation
 			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants_1.gz
