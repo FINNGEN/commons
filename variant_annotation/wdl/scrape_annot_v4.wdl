@@ -28,6 +28,7 @@ task join_annot {
 		exists=value in h
 		if(!exists)
 		{
+			system("echo ERROR header did not contain column "value"  >&2")
 			exit 1
 		}
 		exit 0
