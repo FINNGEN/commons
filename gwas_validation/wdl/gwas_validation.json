@@ -1,0 +1,11 @@
+{
+    "gwas_validation.phenolist":"gs://r9_data/regenie/demopheno/input/r89_common_phenos",
+    "gwas_validation.validate.current_path":"gs://r9_data/regenie/demopheno/summary_stats/{PHENO}.gz",
+    "gwas_validation.validate.previous_path":"gs://r8_data/regenie/sisuv4/release/output/summary_stats/{PHENO}.gz",
+    "gwas_validation.validate.annotation":"gs://r9_data/annotation/R9_annotated_variants_v0.small.gz",
+    "gwas_validation.validate.docker":"eu.gcr.io/finngen-refinery-dev/bioinformatics:0.7",
+    "gwas_validation.validate.colnames":["#chrom","pos","ref","alt","pval","beta","mlogp"],
+    "gwas_validation.validate.prev_label":"R8",
+    "gwas_validation.validate.current_label":"R9",
+    "gwas_validation.validate.zones":"europe-west1-b europe-west1-c europe-west1-d"
+}
