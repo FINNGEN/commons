@@ -7,5 +7,6 @@
     "gwas_validation.validate.colnames":["#chrom","pos","ref","alt","pval","beta","mlogp"],
     "gwas_validation.validate.prev_label":"R8",
     "gwas_validation.validate.current_label":"R9",
-    "gwas_validation.validate.zones":"europe-west1-b europe-west1-c europe-west1-d"
+    "gwas_validation.validate.zones":"europe-west1-b europe-west1-c europe-west1-d",
+    "gwas_validation.validate.new_hit_range":1500000
 }

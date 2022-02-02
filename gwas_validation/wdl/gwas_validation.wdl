@@ -34,6 +34,7 @@ task validate {
         Array[String] colnames
         File annotation
         String zones
+        Float new_hit_range
     }
     File current_file = sub(current_path,"\\{PHENO\\}",phenotype)
     File previous_file = sub(previous_path,"\\{PHENO\\}",phenotype)
@@ -41,7 +42,7 @@ task validate {
 
     Float pval_threshold =  0.00001
     Float gwsig_threshold = 0.00000005
-    Float new_hit_range = 1500000
+    
     
     command <<<
         set -eux
