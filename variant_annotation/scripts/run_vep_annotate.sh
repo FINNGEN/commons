@@ -16,10 +16,16 @@ workers=2
 ## requestes pays needed to read vep config file from hail buckets.
 hailctl dataproc start $clustername --vep $build --region $region --requester-pays-allow-all --num-workers $workers --max-idle 30m --subnet $network --zone $zone
 
+# note that double wildcards ** dont work here
 vcf_in="gs://finngen-imputation-panel/sisu4/vcf/snpid/*.vcf.gz"
 out_prefix="gs://finngen-imputation-panel/sisu4/hail/sisu4_annot"
 
 ## submit annotation job
+#
 # add --no_maf in the end if VCFs dont have MAF INFO field
-hailctl dataproc submit $clustername --pyfiles $(dirname -- "$0")/hail_functions.py \
+#
+# if you get IllegalArgumentException: requirement failed
+# while running, uncomment hl._set_flags(no_whole_stage_codegen='1') in vep_annotate.py
+#
+hailctl dataproc submit $clustername --region $region --pyfiles $(dirname -- "$0")/hail_functions.py \
 	$(dirname -- "$0")/vep_annotate.py $vcf_in $out_prefix --overwrite
