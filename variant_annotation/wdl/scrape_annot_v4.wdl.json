@@ -1,5 +1,6 @@
 {
   "scrape_annots.vcfs": "gs://r8_data/r8_sisuv4_vcf_chromlist",
   "scrape_annots.external_annot": "gs://finngen-imputation-panel/sisu4/hail/sisu4_annot.tsv.gz",
+  "scrape_annots.add_rsids.ref_file": "gs://r9-data/annotation/resources/dbsnp-b155-GRC38.13.vcf.gz",
   "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.6"
 }
