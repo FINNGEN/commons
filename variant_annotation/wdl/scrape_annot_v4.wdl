@@ -70,6 +70,7 @@ task join_annot {
 
 task small{
 	File annotation
+	String wanted_columns
 	Int local_disk=100
 	String docker
 	runtime {
@@ -87,7 +88,7 @@ task small{
 		cat > cols.awk <<'AWK'
 		BEGIN {
 		FS=OFS="\t"
-		len_head=split("#variant chr pos ref alt INFO AF AC_Het AC_Hom most_severe gene_most_severe rsid", wanted, " ")
+		len_head=split("${wanted_columns}", wanted, " ")
 		}
 		NR==1 {
 		for(i=1;i<=NF;i++) h[$i]=i
@@ -214,10 +215,10 @@ task add_rsids {
             for line in f:
                 line = line.strip()
                 s = line.split('\t')
-                chr = int(s[h_idx['#CHR']])
-                pos = int(s[h_idx['POS']])
-                ref = s[h_idx['REF']]
-                alt = s[h_idx['ALT']]
+                chr = int(s[h_idx['chr']])
+                pos = int(s[h_idx['pos']])
+                ref = s[h_idx['ref']]
+                alt = s[h_idx['alt']]
                 ref_vars = []
                 while ref_has_lines and int(ref_chr) < chr or (int(ref_chr) == chr and ref_pos < pos):
                     ref_line = fp_ref.readline().rstrip('\r\n').split('\t')
