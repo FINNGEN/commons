@@ -15,13 +15,13 @@ from typing import Tuple, List, OrderedDict, Dict, Iterator
 from scipy.stats import chi2
 import math
 
-def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, retries:int=5) -> Dict[str,str]:
+def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, ld_source, retries:int=5) -> Dict[str,str]:
     snooze=2
     snooze_multiplier = 2
     max_snooze=256
 
     ld_w=max(min(5000000,ld_w), 500000)
-    url = f'http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel=sisu3&window={ld_w}&r2_thresh={r2}'
+    url = f'http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel={ld_source}&window={ld_w}&r2_thresh={r2}'
     print(f'requesting LD {url}')
     r = requests.get(url)
     retries_left = retries
@@ -250,8 +250,8 @@ class Cluster(object):
                 )
 
 
-def prune_cluster(cl:Cluster, r2:float, n_retry:int, clump_expected_chisq:float=None,
-                    clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None) ->List[Tuple[Hit,List[Hit]]]:
+def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_chisq:float=None,
+                    clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None, fixed_ld_search_width=None) ->List[Tuple[Hit,List[Hit]]]:
     '''
         Takes cluster and prunes by LD of Hits in cluster, retaining the top in in the clustered
         Args:
@@ -291,7 +291,12 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, clump_expected_chisq:float=
 
         ## ld server is remarkably inexact on the range so add a lot of buffer.
         safety_buffer=50000
-        width = max(abs(top.pos-cl.boundaries[0]-safety_buffer)*2, abs(top.pos-cl.boundaries[1]+safety_buffer)*2 )
+
+        if fixed_ld_search_width:
+            width=fixed_ld_search_width
+        else:
+            width = max(abs(top.pos-cl.boundaries[0]-safety_buffer)*2, abs(top.pos-cl.boundaries[1]+safety_buffer)*2 )
+
         search_r2=r2
         chisqtop=chi2.isf(cl.peak_priority, df=1)
 
@@ -302,7 +307,7 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, clump_expected_chisq:float=
             search_r2=0
 
         ld = get_ld_vars(top.chrom, top.pos, top.ref, top.alt, search_r2,
-            width, retries=n_retry )
+            width, ld_source=ld_source,retries=n_retry )
 
         varid = ":".join( [top.chrom,str(top.pos),top.ref,top.alt] )
         ldvars = [ ("chr" + ldv["variation2"].replace(":","_"), float(ldv["r2"])) for ldv in ld["ld"] if ldv["variation2"]!=varid]
@@ -326,12 +331,14 @@ if __name__ == '__main__':
     parser.add_argument('file', action='store', type=str, help='')
     parser.add_argument('outfile', action='store', type=str, help='')
     parser.add_argument('-pcol', default="lead_pval", help="Priority columns, smaller is more important. Data needs to be convertable to float")
+    parser.add_argument('-ld_source', default="sisu4")
     parser.add_argument('-chromcol', default="chrom")
     parser.add_argument('-poscol', default="pos")
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
     parser.add_argument('-n_retries_ld', type=int, default=5)
     parser.add_argument('-ld', type=float, default=0.5)
+    parser.add_argument('-fixed_ld_search_width', type=int, help="Don't try to optimize the search width based on cluster min/max bp position but use fixed width. LD server can be very innacurate in width")
     parser.add_argument('-clump_expected_chisq', type=float,
         help="Use only for single phenotype file pruning hits caused by residual LD from stronger signal !!! Clumps variants if based on LD the observed variant chisq is this much attributable to excepted LD from stronger hit.")
     parser.add_argument('-clump_expected_chisq_af', type=float, default=0.01,help="AF limit where rarer than this variants are subject to clump_expected_chisq")
@@ -384,9 +391,9 @@ if __name__ == '__main__':
 
                 if hit.chrom != last_hit.chrom or hit.pos-last_hit.pos > args.ld_w:
                     print("#### starting prune cluster")
-                    pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld,
+                    pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld,ld_source=args.ld_source,
                         clump_expected_chisq=args.clump_expected_chisq, clump_expected_chisq_filter_af_col=args.clump_expected_chisq_filter_af_col,
-                        af_threshold_chi_prune=args.clump_expected_chisq_af)
+                        af_threshold_chi_prune=args.clump_expected_chisq_af, fixed_ld_search_width=args.fixed_ld_search_width)
                     print(f'#### Cluster pruned to {len(pruned)} hits')
                     write_cluster(pruned,pruned_cols, out)
                     cluster.clear()
