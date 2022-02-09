@@ -1,6 +1,6 @@
 # Script to LD cluster arbitrary text file rows containing chr, pos, ref, alt
 
-##Installation
+## Installation
 
 Python 3 required. Install dependencies with pip install -r requirements.txt
 
