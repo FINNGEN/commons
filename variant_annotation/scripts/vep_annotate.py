@@ -19,6 +19,9 @@ if __name__ == "__main__":
     print("Starting annotations")
     print("input: {} and ref {} ".format(args.vcf,args.ref_genome ))
 
+    ## uncomment this if getting this: IllegalArgumentException: requirement failed
+    #hl._set_flags(no_whole_stage_codegen='1')
+    
     ## assume already annot
     if args.vcf.endswith(".mt"):
         mt = hl.read_matrix_table(args.outfile + ".mt")
