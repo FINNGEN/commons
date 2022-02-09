@@ -4,6 +4,7 @@
 
 Python 3 required. Install dependencies with pip install -r requirements.txt
 
+## Running 
 Script takes tab-delimited, chr pos ordered `file` (order checked but not sorted, must pre-sort) with headers and considers adjacent lines for ld pruning if they are each `ld_w` basepairs apart. The `ld_w` is taken from the closest point of formed cluster (i.e. lines can get chained into single cluster this spanning larger area than `ld_w`).
 All lines that have r2> `ld` will be clustered together, most important line output as is and selected columns (`prune_column_list`) will be output in additional column in the end.
 
