@@ -5,6 +5,10 @@ import sys
 import time
 import requests
 
+
+if sys.version_info[0] != 3 or sys.version_info[1]<7 or (sys.version_info[1]==7 and sys.version_info[2]<2):
+    raise Exception(" Python Version >= 3.7.2 required")
+
 from functools import partial
 from collections import namedtuple
 from collections import defaultdict
