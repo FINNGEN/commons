@@ -274,12 +274,11 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_ch
     redhit=0
 
     while not cl.empty():
-        print(cluster)
+
         best = cl.get_best()
         worse_same = best[1]
         top = best[0]
 
-        print(f'Current {top}')
         if top is None:
             return outdat
 
@@ -318,7 +317,7 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_ch
 
         removed = cl.remove_hits( ldvars, r2, chisqtop, clump_expected_chisq, clump_expected_chisq_filter_af_col, af_threshold_chi_prune=af_threshold_chi_prune )
 
-        print(f"removed {removed}")
+        #print(f"removed {removed}")
         removed.extend(worse_same)
         print(f'merged: {len(removed)} hits to top. Top: {top.varid}, removed {[ h.varid for h in removed]}')
         redhit+=1
@@ -391,7 +390,9 @@ if __name__ == '__main__':
                 if n_vars % progress_rep_step == 0 and n_vars>0:
                    print("Retrieved LD for {} variants".format( n_vars) ,file=sys.stderr)
                 if (hit.chrom != last_hit.chrom and hit.chrom in seen_chroms) or (hit.chrom == last_hit.chrom and hit.pos < last_hit.pos):
-                    raise Exception(f"Data must be sorted by chromosome and column before running. Offending row{hit.data}")
+                    raise Exception(f"Data must be sorted by chromosome and position before running. Offending row{hit.data}")
+
+                seen_chroms[hit.chrom] = 1
 
                 if hit.chrom != last_hit.chrom or hit.pos-last_hit.pos > args.ld_w:
                     print("#### starting prune cluster")
@@ -412,6 +413,9 @@ if __name__ == '__main__':
             if cluster.size()>0:
                 # write last cluster not pruned yet
                 print(f"#### starting prune cluster {cluster}")
-                pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld, clump_expected_chisq=args.clump_expected_chisq)
+                pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld,ld_source=args.ld_source,
+                    clump_expected_chisq=args.clump_expected_chisq, clump_expected_chisq_filter_af_col=args.clump_expected_chisq_filter_af_col,
+                    af_threshold_chi_prune=args.clump_expected_chisq_af, fixed_ld_search_width=args.fixed_ld_search_width)
+
                 print(f'#### Cluster pruned to {len(pruned)} hits')
                 write_cluster(pruned,pruned_cols, out)
