@@ -255,22 +255,19 @@ task add_rsids {
 
         EOF
 
-        echo "`date` tabixing"
-        tabix -s 1 -b 2 -e 2 annotation.gz
         echo "`date` done"
 
     >>>
 
     output {
         File rsid_out = "annotation.gz"
-        File rsid_tbi = "annotation.gz.tbi"
     }
 
     runtime {
         docker: "${docker}"
         cpu: "1"
-        memory: "2 GB"
-        disks: "local-disk 200 SSD"
+        memory: "4 GB"
+        disks: "local-disk 100 SSD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 2
         noAddress: true
@@ -423,7 +420,8 @@ task add_gnomad {
         exo_ref.fp.close()
         EOF
 
-        tabix -b 3 -e 3 -s 2 annotation.gz
+        echo "`date` tabixing"
+        tabix -s 2 -b 3 -e 3 annotation.gz
 	>>>
 	output {
 		File gnomad_joined_out = "annotation.gz"
@@ -432,7 +430,7 @@ task add_gnomad {
 	runtime {
         docker: "${docker}"
         cpu: "1"
-        memory: "2 GB"
+        memory: "4 GB"
         disks: "local-disk 200 SSD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 2
