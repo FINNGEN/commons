@@ -290,7 +290,7 @@ task add_gnomad {
 
         echo "`date` Adding gnomad annotations"
         
-        python3 <<EOF | bgzip > annotation.gz
+        python3 <<EOF | bgzip > annotation_gnomad.gz
         
         import gzip
         class Reference:
@@ -331,8 +331,8 @@ task add_gnomad {
             gen_vars = []
             exo_vars=[]
             for line in f:
-                line = line.rstrip("\r\n")
-                s = line.split('\t')
+                oline = line.rstrip("\r\n")
+                s = oline.split('\t')
                 chrom = int(s[h_idx['chr']])
                 pos = int(s[h_idx['pos']])
                 ref = s[h_idx['ref']]
@@ -378,10 +378,10 @@ task add_gnomad {
                 gen_values = ["NA"]*len(genome_cols)
                 if gen_vars:
                     if chrom == int(gen_vars[0][gen_ref.h_idx['#CHROM']]) and pos == int(gen_vars[0][gen_ref.h_idx['POS']]):
-                        for line in gen_vars:
-                            match = (ref == line[gen_ref.h_idx['REF']]) and (alt == line[gen_ref.h_idx['ALT']])
+                        for genvar in gen_vars:
+                            match = (ref == genvar[gen_ref.h_idx['REF']]) and (alt == genvar[gen_ref.h_idx['ALT']])
                             if match:
-                                gen_values = [line[gen_ref.h_idx[col]] for col in genome_cols]
+                                gen_values = [genvar[gen_ref.h_idx[col]] for col in genome_cols]
                                 break
                     else: #reset
                         gen_vars = []
@@ -389,10 +389,10 @@ task add_gnomad {
                 exo_values = ["NA"]*len(exome_cols)
                 if exo_vars:
                     if chrom == int(exo_vars[0][exo_ref.h_idx['#CHROM']]) and pos == int(exo_vars[0][exo_ref.h_idx['POS']]):
-                        for line in exo_vars:
-                            match = (ref == line[exo_ref.h_idx['REF']]) and (alt == line[exo_ref.h_idx['ALT']])
+                        for exvar in exo_vars:
+                            match = (ref == exvar[exo_ref.h_idx['REF']]) and (alt == exvar[exo_ref.h_idx['ALT']])
                             if match:
-                                exo_values = [line[exo_ref.h_idx[col]] for col in exome_cols]
+                                exo_values = [exvar[exo_ref.h_idx[col]] for col in exome_cols]
                                 break
                     else: #reset
                         exo_vars=[]
@@ -401,31 +401,31 @@ task add_gnomad {
                 gevals = '\t'.join(gen_values)
                 #b37 coord
                 b37_coord = "NA"
-                for line in exo_vars:
-                    match = (chrom == int(line[exo_ref.h_idx['#CHROM']]) ) and (pos == int(line[exo_ref.h_idx['POS']]) ) and (ref == line[exo_ref.h_idx['REF']]) and (alt == line[exo_ref.h_idx['ALT']])
+                for exo in exo_vars:
+                    match = (chrom == int(exo[exo_ref.h_idx['#CHROM']]) ) and (pos == int(exo[exo_ref.h_idx['POS']]) ) and (ref == exo[exo_ref.h_idx['REF']]) and (alt == exo[exo_ref.h_idx['ALT']])
                     if match:
                         #CHROM_37	POS_37	REF_37	ALT_37
-                        b37_coord = f"{line[exo_ref.h_idx['CHROM_37']]}:{line[exo_ref.h_idx['POS_37']]}:{line[exo_ref.h_idx['REF_37']]}:{line[exo_ref.h_idx['ALT_37']]}"
+                        b37_coord = f"{exo[exo_ref.h_idx['CHROM_37']]}:{exo[exo_ref.h_idx['POS_37']]}:{exo[exo_ref.h_idx['REF_37']]}:{exo[exo_ref.h_idx['ALT_37']]}"
                         break
-                for line in gen_vars:
+                for geno in gen_vars:
                     if b37_coord != "NA":
                         break
-                    match = (chrom == int(line[gen_ref.h_idx['#CHROM']]) ) and (pos == int(line[gen_ref.h_idx['POS']]) ) and (ref == line[gen_ref.h_idx['REF']]) and (alt == line[gen_ref.h_idx['ALT']])
+                    match = (chrom == int(geno[gen_ref.h_idx['#CHROM']]) ) and (pos == int(geno[gen_ref.h_idx['POS']]) ) and (ref == geno[gen_ref.h_idx['REF']]) and (alt == geno[gen_ref.h_idx['ALT']])
                     if match:
-                        b37_coord = f"{line[gen_ref.h_idx['CHROM_37']]}:{line[gen_ref.h_idx['POS_37']]}:{line[gen_ref.h_idx['REF_37']]}:{line[gen_ref.h_idx['ALT_37']]}"
+                        b37_coord = f"{geno[gen_ref.h_idx['CHROM_37']]}:{geno[gen_ref.h_idx['POS_37']]}:{geno[gen_ref.h_idx['REF_37']]}:{geno[gen_ref.h_idx['ALT_37']]}"
                         break
-                outline = f"{line}\t{b37_coord}\t{exvals}\t{gevals}"
+                outline = f"{oline}\t{b37_coord}\t{exvals}\t{gevals}"
                 print(outline)
         gen_ref.fp.close()
         exo_ref.fp.close()
         EOF
 
         echo "`date` tabixing"
-        tabix -s 2 -b 3 -e 3 annotation.gz
+        tabix -s 2 -b 3 -e 3 annotation_gnomad.gz
 	>>>
 	output {
-		File gnomad_joined_out = "annotation.gz"
-		File gnomad_joined_out_tbi = "annotation.gz.tbi"
+		File gnomad_joined_out = "annotation_gnomad.gz"
+		File gnomad_joined_out_tbi = "annotation_gnomad.gz.tbi"
 	}
 	runtime {
         docker: "${docker}"
