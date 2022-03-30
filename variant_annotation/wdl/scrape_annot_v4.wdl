@@ -217,19 +217,22 @@ task add_rsids {
                 #get variant values
                 line = line.strip()
                 s = line.split('\t')
-                chr = int(s[h_idx['chr']])
+                chrom = int(s[h_idx['chr']])
                 pos = int(s[h_idx['pos']])
                 ref = s[h_idx['ref']]
                 alt = s[h_idx['alt']]
-
-                while ref_has_lines and ref_chr < chr or (ref_chr == chr and ref_pos < pos):
+                #check if ref vars c:p has moved forward
+                if ref_vars:
+                    if int(ref_vars[0][ref_h_idx['#CHROM']]) != chrom or int(ref_vars[0][ref_h_idx['POS']]) != pos:
+                        ref_vars = []
+                while ref_has_lines and ref_chr < chrom or (ref_chr == chrom and ref_pos < pos):
                     ref_line = fp_ref.readline().rstrip('\r\n').split('\t')
                     try:
                         ref_chr = int(ref_line[ref_h_idx['#CHROM']])
                         ref_pos = int(ref_line[ref_h_idx['POS']])
                     except ValueError:
                         ref_has_lines = False
-                while ref_has_lines and int(ref_chr) == chr and ref_pos == pos:
+                while ref_has_lines and int(ref_chr) == chrom and ref_pos == pos:
                     ref_vars.append(ref_line)
                     ref_line = fp_ref.readline().strip().split('\t')
                     try:
@@ -242,7 +245,7 @@ task add_rsids {
                 #if chrom and pos match and there are items in the ref vars, we try to match.
                 # If chrom and pos don't match, we reset ref vars
                 if ref_vars:
-                    if (chr == int(ref_vars[0][ref_h_idx["#CHROM"]]) ) and (pos == int(ref_vars[0][ref_h_idx["POS"]]) ):
+                    if (chrom == int(ref_vars[0][ref_h_idx["#CHROM"]]) ) and (pos == int(ref_vars[0][ref_h_idx["POS"]]) ):
                         for r in ref_vars:
                             if r[ref_h_idx['REF']] == ref and alt in r[ref_h_idx['ALT']].split(','):
                                 rsid = r[ref_h_idx['ID']]
@@ -337,6 +340,15 @@ task add_gnomad {
                 pos = int(s[h_idx['pos']])
                 ref = s[h_idx['ref']]
                 alt = s[h_idx['alt']]
+                #check if gen and exo vars have different c:p than variant. If yes, empty them.
+                if gen_vars:
+                    if int(gen_vars[0][gen_ref.h_idx['#CHROM']]) != chrom or int(gen_vars[0][gen_ref.h_idx['POS']]) != pos:
+                        gen_vars = []
+
+                if exo_vars:
+                    if int(exo_vars[0][exo_ref.h_idx['#CHROM']]) != chrom or int(exo_vars[0][exo_ref.h_idx['POS']]) != pos:
+                        exo_vars = []
+
                 #genome
                 while gen_ref.has_lines and gen_ref.chrom < chrom or ( gen_ref.chrom == chrom and gen_ref.pos < pos):
                     gen_ref.line = gen_ref.fp.readline().rstrip('\r\n').split('\t')
