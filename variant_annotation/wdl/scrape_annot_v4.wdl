@@ -378,7 +378,7 @@ task add_gnomad {
                         gen_ref.has_lines = False
                 
                 while exo_ref.has_lines and ( exo_ref.chrom == chrom and exo_ref.pos == pos ):
-                    gen_vars.append(exo_ref.line)
+                    exo_vars.append(exo_ref.line)
                     exo_ref.line = exo_ref.fp.readline().rstrip("\r\n").split('\t')
                     try:
                         exo_ref.chrom = int(exo_ref.line[exo_ref.h_idx['#CHROM']])
