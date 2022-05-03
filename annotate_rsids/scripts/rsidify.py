@@ -143,31 +143,38 @@ if __name__=="__main__":
             ####
             # If the variant is in same chrompos as the stored variants from dbsnp reference, then keep them. Otherwise, we need to reset them.
             ####
-            if ref_vars:
-                if int(ref_vars[0][ref_h_idx['#CHROM']]) != chrom or int(ref_vars[0][ref_h_idx['POS']]) != pos:
-                    ref_vars = []
+            if any([(int(a[ref_h_idx['#CHROM']]) != chrom) or (int(a[ref_h_idx['POS']]) != pos) for a in ref_vars ]):
+                ref_vars = []
 
             ####
             # Spool reference to current position
             ####
             while ref_has_lines and (ref_chr < chrom or (ref_chr == chrom and ref_pos < pos) ):
                 ref_line = fp_ref.readline().rstrip('\r\n').split('\t')
+                if ref_line == [""]:
+                    ref_has_lines = False
+                    break
                 try:
                     ref_chr = int(ref_line[ref_h_idx['#CHROM']])
                     ref_pos = int(ref_line[ref_h_idx['POS']])
                 except ValueError:
-                    ref_has_lines = False
+                    print(f"Error: Reference file chrom or pos could not be evaluated. Offending line: {ref_line}",file=sys.stderr)
+                    raise
             ####
             # Store all reference lines on same chrom:pos as our variant
             ####
             while ref_has_lines and ref_chr == chrom and ref_pos == pos:
                 ref_vars.append(ref_line)
                 ref_line = fp_ref.readline().strip().split('\t')
+                if ref_line == [""]:
+                    ref_has_lines = False
+                    break
                 try:
                     ref_chr = int(ref_line[ref_h_idx['#CHROM']])
                     ref_pos = int(ref_line[ref_h_idx['POS']])
                 except ValueError:
-                    ref_has_lines = False
+                    print(f"Error: Reference file chrom or pos could not be evaluated. Offending line: {ref_line}",file=sys.stderr)
+                    raise
 
             
             ####
@@ -177,15 +184,10 @@ if __name__=="__main__":
             # If chrom and pos don't match, we reset ref vars
             rsid = 'NA'
             
-            if ref_vars:
-                if (chrom == int(ref_vars[0][ref_h_idx["#CHROM"]]) ) and (pos == int(ref_vars[0][ref_h_idx["POS"]]) ):
-                    for r in ref_vars:
-                        if r[ref_h_idx['REF']] == ref and alt in r[ref_h_idx['ALT']].split(','):
-                            rsid = r[ref_h_idx['ID']]
-                            break
-                else:
-                    #chrom and pos have advanced further than ref vars, clear ref vars
-                    ref_vars = []
+            for r in ref_vars:
+                if r[ref_h_idx['REF']] == ref and alt in r[ref_h_idx['ALT']].split(','):
+                    rsid = r[ref_h_idx['ID']]
+                    break
             
             out_write(f"{line}{SEP}{rsid}\n")
     if args.out:
