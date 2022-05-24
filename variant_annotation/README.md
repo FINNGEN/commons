@@ -20,3 +20,19 @@ Run wdl/scrape_annot.wdl with the prepared configuration file
 First install hail `pip install hail` to install `hailctl` script.
 
 Check/modify arguments in scripts/run_vep_annotate.sh for examples how to run variant annotations.
+
+
+## Query OpenTargets
+
+This script (scripts/query_opentargets.py) can be used to annotate a tab-separated file with left-aligned and minimized chr, pos, ref, alt in build 38 with OpenTargets phewas
+and tag proxies.
+
+Needs Python >= 3.7.2
+
+Install requirements using `pip install -r variant_annotation/opentargets_requirements.txt`
+
+Run scripts/query_opentargets.py for command line instructions
+
+Example command with genomewide signficiant pvalue and r2 0.2 thresholds.  Additionally ignores FINNGEN_R5 study from results and searches all credible set variants in Autoreporting format.
+
+`scripts/query_opentargets.py  input.tsv --p_threshold 5e-8 --ignore_studies FINNGEN_R5  --r_threshold 0.2 --parse_credsets_col credible_set_variants > input.with.OpenTargets.tsv
