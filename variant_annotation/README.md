@@ -35,4 +35,4 @@ Run scripts/query_opentargets.py for command line instructions
 
 Example command with genomewide signficiant pvalue and r2 0.2 thresholds.  Additionally ignores FINNGEN_R5 study from results and searches all credible set variants in Autoreporting format.
 
-`scripts/query_opentargets.py  input.tsv --p_threshold 5e-8 --ignore_studies FINNGEN_R5  --r_threshold 0.2 --parse_credsets_col credible_set_variants > input.with.OpenTargets.tsv
+`scripts/query_opentargets.py  input.tsv --p_threshold 5e-8 --ignore_studies FINNGEN_R5  --r_threshold 0.2 --parse_credsets_col credible_set_variants > input.with.OpenTargets.tsv`
