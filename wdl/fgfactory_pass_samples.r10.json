@@ -1,6 +1,6 @@
 {
   "fgfactory_pass_samples.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.7",
-  "fgfactory_pass_samples.CHIP_INFO": "gs://r10-data/chip_info_R10.txt",
+  "fgfactory_pass_samples.CHIP_INFO": "gs://r10-data/chip_info_R10_fix.txt",
   "fgfactory_pass_samples.RELEASE": "R10",
   "fgfactory_pass_samples.TO_EXCLUDE": "_chr21_qcd_imputed_tags_edited_subset_subset.vcf.gz",
   "fgfactory_pass_samples.VCF_ARRAY": [
