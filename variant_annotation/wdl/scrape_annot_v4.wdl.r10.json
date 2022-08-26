@@ -1,6 +1,6 @@
 {
     "scrape_annots.vcfs": "gs://r10-data/annotation/r10_vcf_chrom_files",
-    "scrape_annots.external_annot": "gs://finngen-imputation-panel/sisu4.2/hail/sisu4.2_annot.tsv.gz",
+    "scrape_annots.external_annot": "gs://finngen-imputation-panel/sisu4.2/hail/sisu4.2_annot_annot.tsv.bgz",
     "scrape_annots.add_rsids.ref_file": "gs://r9-data/annotation/resources/dbsnp-b155-GRC38.13.vcf.gz",
     "scrape_annots.small.wanted_columns": "#variant chr pos ref alt INFO AF AC_Het AC_Hom most_severe gene_most_severe rsid b37_coord EXOME_enrichment_nfsee EXOME_enrichment_nfe GENOME_enrichment_nfee GENOME_enrichment_nfe",
     "scrape_annots.add_gnomad.gnomad_genomes":"gs://gnomad2/lifted_picard_b38/genomes/gnomad.2.1.1.genomes.b38.tsv.gz",
