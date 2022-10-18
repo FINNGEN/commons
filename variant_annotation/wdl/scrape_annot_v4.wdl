@@ -9,7 +9,7 @@ task join_annot {
 	runtime {
 		docker: "${docker}"
 		memory:"8G"
-		disks: "local-disk ${local_disk} SSD"
+		disks: "local-disk ${local_disk} HDD"
 		cpu:"1"
 		zones: "europe-west1-b europe-west1-c europe-west1-d"
 		preemptible: 1
@@ -68,10 +68,10 @@ task join_annot {
 }
 
 
-task small{
+task small {
 	File annotation
 	String wanted_columns
-	Int local_disk=100
+	Int local_disk = ceil(size(annotation, "G")) + 10
 	String docker
 	runtime {
 		docker: "${docker}"
@@ -113,14 +113,14 @@ task small{
 task extract {
 
 	File vcf
-	Int local_disk=200
+	Int local_disk = ceil(size(vcf, "G")) + 10
 	String docker
 	String outfile=basename(vcf) + ".annot.gz"
 
 	runtime {
 		docker: "${docker}"
 		memory:"2G"
-		disks: "local-disk ${local_disk} SSD"
+		disks: "local-disk ${local_disk} HDD"
 		cpu:"1"
 		zones: "europe-west1-b europe-west1-c europe-west1-d"
 		preemptible: 1
@@ -186,6 +186,7 @@ task add_rsids {
 	File ref_file
 	String docker
 
+    Int local_disk = (ceil(size(annotation_file, "G")) + ceil(size(ref_file, "G"))) * 2
 
     command <<<
 
@@ -270,7 +271,7 @@ task add_rsids {
         docker: "${docker}"
         cpu: "1"
         memory: "4 GB"
-        disks: "local-disk 100 SSD"
+        disks: "local-disk ${local_disk} HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 2
         noAddress: true
@@ -285,6 +286,8 @@ task add_gnomad {
 	File gnomad_exomes
     Array[String] exome_cols
     Array[String] genome_cols
+
+    Int local_disk = ceil(size(annotation_file, "G")) + ceil(size(gnomad_genomes, "G")) + ceil(size(gnomad_genomes, "G")) * 2 + 10
 
 	String docker
 
@@ -443,7 +446,7 @@ task add_gnomad {
         docker: "${docker}"
         cpu: "1"
         memory: "4 GB"
-        disks: "local-disk 200 SSD"
+        disks: "local-disk ${local_disk} HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 2
         noAddress: true

@@ -1,4 +1,5 @@
 {
-    "filter_sumstats_by_variants.sumstats_loc":"{summary statistic list}",
-    "filter_sumstats_by_variants.filter.variant_file":"{allowed_variant_list}"
+    "filter_sumstats_by_variants.sumstats_loc":"gs://r10-data/regenie/release/r10_sumstats.txt",
+    "filter_sumstats_by_variants.filter.variant_file":"gs://r10-data/finemap/R10_variants_info_0.60.txt.gz",
+    "filter_sumstats_by_variants.filter.cpra_sep":":"
 }
