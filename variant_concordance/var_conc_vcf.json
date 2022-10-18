@@ -1,0 +1,4 @@
+{
+  "variant_concordance.sample_pairs": "gs://r10-data/qc/r10_conc_samplepairs_update",
+  "variant_concordance.vcf_vcf_loc": "gs://r10-data/qc/r10_chr12_forceimpute_selected_chip_conc_vcf"
+}
