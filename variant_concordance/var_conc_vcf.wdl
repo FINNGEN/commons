@@ -11,6 +11,9 @@ task filter_merge {
 
         set -euxo pipefail
 
+        # underscores cause trouble with vcf conversions
+        sed -i 's/_/-/g' ${sample_pairs}
+
         cut -f1 ${sample_pairs} | awk '{print 0,$0}' > keep_vcf1_samples
         cut -f2 ${sample_pairs} | awk '{print 0,$0}' > keep_vcf2_samples
 
@@ -21,10 +24,6 @@ task filter_merge {
         # filter beds so they will have the same variants
         plink2 --allow-extra-chr --extract <(cut -f2 ${base2}.bim) --bfile ${base1} --make-bed --out ${base1}_shared
         plink2 --allow-extra-chr --extract <(cut -f2 ${base1}.bim) --bfile ${base2} --make-bed --out ${base2}_shared
-
-        # underscores cause trouble with vcf conversions
-        sed -i 's/_/-/g' ${base1}_shared.fam
-        sed -i 's/_/-/g' ${base2}_shared.fam
 
         # in case sample names are shared between datasets, add suffix to one dataset's samples
         awk 'BEGIN{OFS="\t"} {$2=$2"-DATA1"} 1' ${base1}_shared.fam > temp && mv temp ${base1}_shared.fam
@@ -63,9 +62,6 @@ task concordance {
 
         set -euxo pipefail
 
-        # underscores were converted to dashes in the filter_merge task, do the same here to match samples right
-        sed -i 's/_/-/g' ${sample_pairs}
-
         python3 <<EOF | bgzip > concordance.gz
 
         """
@@ -76,6 +72,7 @@ task concordance {
 
         import gzip
         import sys
+        import re
 
         def eprint(*args, **kwargs):
             print(*args, file=sys.stderr, **kwargs)
@@ -92,9 +89,9 @@ task concordance {
                 return {sample: i for i,sample in enumerate(line.split('\t'))}
 
         def count_alt_alleles(gt):
-            if gt == './.':
+            s = re.split('/|\|', gt)
+            if s[0] == '.' and s[1] == '.':
                 return -1
-            s = gt.split('/')
             return int(s[0]) + int(s[1])
 
         def concordance(vcf, sample_pairs):
@@ -142,9 +139,9 @@ task concordance {
                     het_total = counts[1]+counts[3]+counts[4]+counts[5]+counts[7]
                     het_prop = counts[4]/het_total if het_total > 0 else -1
 
-                    # calculate hom_total and hom_prop for decide minor allele
+                    # calculate hom_total and hom_prop for decided minor allele
                     n_alt0 = 2*sum(counts[6:9]) + sum(counts[3:6])
-                    n_ref0 = 2*len(pairs) - n_alt0
+                    n_ref0 = 2*sum(counts[0:3]) + sum(counts[3:6])
                     if n_alt0 < n_ref0:
                         hom_total = counts[2]+counts[5]+counts[6]+counts[7]+counts[8]
                         hom_prop = counts[8]/hom_total if hom_total > 0 else -1
@@ -152,7 +149,7 @@ task concordance {
                         hom_total = counts[0]+counts[1]+counts[2]+counts[3]+counts[6]
                         hom_prop = counts[0]/hom_total if hom_total > 0 else -1
 
-                    af = n_alt0/2/len(pairs)
+                    af = n_alt0/2/(len(pairs) - miss0)
                     print('\t'.join([s[2], str(af), str(miss0), str(miss1)] + [str(val) for val in counts + [het_prop, hom_prop]]))
 
             eprint('done')
