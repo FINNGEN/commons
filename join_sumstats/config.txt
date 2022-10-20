@@ -1,0 +1,4 @@
+file tag pval_col beta_col af_col pval_thresh
+data/WETAMDSTRICT.gz wet pval beta af_alt 1e-6
+data/DRYAMDSTRICTV2.gz dry pval beta af_alt 1e-6
+data/finngen_R9_H7_AMD.gz both_fg pval beta af_alt 1e-6
