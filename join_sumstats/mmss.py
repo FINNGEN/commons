@@ -18,7 +18,7 @@ def read_config(fname):
         config = [{h: d[h_idx[h]] for h in h_idx} for d in data]
     return config
 
-def get_significant_vars(fname, pval_thresh):
+def get_significant_vars(fname, pval_thresh, pval_col):
     eprint("reading variants p<" + str(pval_thresh) + " from " + fname)
     vars = {}
     with gzip.open(fname, 'rt') as f:
@@ -26,7 +26,7 @@ def get_significant_vars(fname, pval_thresh):
         h_idx = {h: i for i,h in enumerate(header)}
         for line in f:
             s = re.split('\t| ', line.strip())
-            if float(s[h_idx["pval"]]) < pval_thresh:
+            if float(s[h_idx[pval_col]]) < pval_thresh:
                 v = s[0].replace("chr", "").replace("X", "23") + ':' + s[1] + ':' + s[2] + ':' + s[3]
                 vars[v] = True
     return vars
@@ -62,7 +62,7 @@ def print_joined_data(uniq_vars, data, config, columns):
 
 if __name__ == '__main__':
     config = read_config(sys.argv[1])
-    filtered_vars = [get_significant_vars(c["file"], float(c["pval_thresh"])) for c in config]
+    filtered_vars = [get_significant_vars(c["file"], float(c["pval_thresh"]), c["pval_col"]) for c in config]
     uniq_vars = sorted(list(set([v for vars in filtered_vars for v in vars])))
     data = [read_sumstat(set(uniq_vars), c["file"]) for c in config]
     print_joined_data(uniq_vars, data, config, ["pval_col", "beta_col", "af_col"])
