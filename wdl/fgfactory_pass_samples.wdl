@@ -159,12 +159,12 @@ task samplewise_summary {
 		#/fs/ffworkspace/fgfact_prod_R2_0718/output/AxiomGT1_b02_26072018/AxiomGT1_b02.calls_tags_edited_drem_drem_chr22.vcf.gz  Axiom_FinnGen1.r1       510673  R2       COHORT2 AxiomGT1_b02
 
 		#extract bash arrays from summary datatable
-		input_chr=($(awk '{print $1}' ${SUMMARY_DATA}))
-		chip_type=($(awk '{print $2}' ${SUMMARY_DATA}))
-		variants_passQC=($(awk '{print $3}' ${SUMMARY_DATA}))
-		Cohort_dataset=($(awk '{print $6}' ${SUMMARY_DATA}))
-		release_dataset=($(awk '{print $4}' ${SUMMARY_DATA}))
-		original_cohort=($(awk '{print $5}' ${SUMMARY_DATA}))
+		input_chr=($(awk 'BEGIN{FS=OFS="\t"} {print $1}' ${SUMMARY_DATA}))
+		chip_type=($(awk 'BEGIN{FS=OFS="\t"} {print $2}' ${SUMMARY_DATA}))
+		variants_passQC=($(awk 'BEGIN{FS=OFS="\t"} {print $3}' ${SUMMARY_DATA}))
+		Cohort_dataset=($(awk 'BEGIN{FS=OFS="\t"} {print $6}' ${SUMMARY_DATA}))
+		release_dataset=($(awk 'BEGIN{FS=OFS="\t"} {print $4}' ${SUMMARY_DATA}))
+		original_cohort=($(awk 'BEGIN{FS=OFS="\t"} {print $5}' ${SUMMARY_DATA}))
 
 
 		#Run a loop to join Finngen IDs and agregate data from the summary table

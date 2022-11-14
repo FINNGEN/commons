@@ -47,10 +47,12 @@ task filter_prune {
     # R4 chr1 required 26G RAM in LD pruning
     # wdl run showed that size of the file / 2 is not enough RAM for small chromosomes
     runtime {
-        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.6"
+        docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.6"
         memory: ceil(size(bedfile, "G")) + " GB"
-        disks: "local-disk 200 HDD"
+        disks: "local-disk 400 HDD"
         preemptible: 0
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        noAddress: true
     }
 }
 
@@ -83,10 +85,12 @@ task merge_plink {
     }
 
     runtime {
-        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.6"
+        docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.6"
         memory: "8 GB"
         disks: "local-disk 200 HDD"
         preemptible: 0
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        noAddress: true
     }
 }
 

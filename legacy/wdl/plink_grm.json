@@ -1,9 +1,9 @@
 {
-    "plink_grm.bedfilelist": "gs://r7_data/grm/R7_bedfiles.txt",
-    "plink_grm.filter_prune.include_variants": "gs://r7_data/grm/R7_variants_info_allbatches_0.95.txt",
-    "plink_grm.filter_prune.include_samples": "gs://r7_data/grm/finngen_R7_chr23.fam",
+    "plink_grm.bedfilelist": "gs://r10-data/grm/R10_bedfiles.txt",
+    "plink_grm.filter_prune.include_variants": "gs://r10-data/grm/R10_variants_info_allbatches_0.90.txt",
+    "plink_grm.filter_prune.include_samples": "gs://r10-data/plink/chrom/test_chr23.fam",
     "plink_grm.filter_prune.geno_missing": 0.03,
     "plink_grm.filter_prune.maf": 0.01,
-    "plink_grm.filter_prune.ld": "1000kb 1 0.1",
-    "plink_grm.merge_plink.out": "R7_GRM_V0_LD_0.1"
+    "plink_grm.filter_prune.ld": "1500kb 1 0.2",
+    "plink_grm.merge_plink.out": "R10_GRM_V0_LD_0.2"
 }
