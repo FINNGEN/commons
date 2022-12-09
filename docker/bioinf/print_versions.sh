@@ -18,5 +18,6 @@ datamash --version
 emacs --version
 vim --version
 jq --version
+gcloud --version
 pip3 list --format=freeze
 print_packages.R

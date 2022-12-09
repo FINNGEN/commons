@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 LABEL name="BIOINFORMATICS"
 LABEL maintainer="jkarjala@broadinstitute.org"
@@ -6,15 +6,15 @@ LABEL maintainer="jkarjala@broadinstitute.org"
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-ARG HTSLIB_VER=1.12
-ARG BCFTOOLS_VER=1.12
-ARG R_VER=4.0.5
+ARG HTSLIB_VER=1.16
+ARG BCFTOOLS_VER=1.16
+ARG R_VER=4.2.2
 
 WORKDIR /tmp
 
 RUN apt-get update && apt-get upgrade --yes
 
-RUN apt-get install vim emacs jq less datamash wget gawk curl lsb-core make gcc g++ cmake gfortran libreadline6-dev \
+RUN apt-get install vim emacs jq less datamash wget gawk curl lsb-core make gcc g++ g++-9 cmake gfortran libreadline6-dev \
     libz-dev libbz2-dev liblzma-dev zlib1g-dev libpcre2-dev libpcre3-dev libssl-dev libcurl4-openssl-dev \
     libopenblas-dev default-jre unzip bzip2 libboost-all-dev \
     libpng-dev libcairo2-dev python3-pip libxml2-dev --yes
@@ -25,13 +25,14 @@ RUN curl -LO https://github.com/samtools/htslib/releases/download/${HTSLIB_VER}/
 
 RUN wget https://code.enkre.net/qctool/zip/release/qctool.tgz && \
     unzip qctool.tgz && \
-    cd qctool && ./waf-1.5.18 configure && ./waf-1.5.18 && \
-    mv build/release/qctool_v2* /usr/local/bin/qctool && cd .. && rm -rf qctool*
+    cd qctool && python3 waf configure && python3 waf && \
+    mv build/release/apps/qctool_v2* /usr/local/bin/qctool && cd .. && rm -rf qctool*
 
+# bgen tools don't compile with g++ 11 so use 9
 RUN wget http://code.enkre.net/bgen/tarball/release/bgen.tgz && \
-    tar xzf bgen.tgz && \
-    cd bgen.tgz && ./waf configure && ./waf && \
-    mv build/apps/bgenix build/apps/cat-bgen /usr/local/bin/ && cd .. && rm -rf bgen.tgz
+    tar xzf bgen.tgz && cd bgen.tgz && \
+    CXX=/usr/bin/g++-9 python3 waf configure && python3 waf && \
+    mv build/apps/bgenix build/apps/cat-bgen build/apps/edit-bgen /usr/local/bin/ && cd .. && rm -rf bgen.tgz
 
 RUN curl -LO https://github.com/samtools/bcftools/releases/download/${BCFTOOLS_VER}/bcftools-${BCFTOOLS_VER}.tar.bz2 && \
     tar -xvjf bcftools-${BCFTOOLS_VER}.tar.bz2 && cd bcftools-${BCFTOOLS_VER} && \
@@ -46,6 +47,10 @@ RUN curl -O http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver && ch
     curl -O http://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz && \
     curl -O http://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz && \
     mkdir /liftover && mv *.chain.gz /liftover/
+
+ENV CLOUDSDK_INSTALL_DIR /usr/local/gcloud/
+RUN curl -sSL https://sdk.cloud.google.com | bash
+ENV PATH $PATH:/usr/local/gcloud/google-cloud-sdk/bin
 
 RUN curl -O https://cloud.r-project.org/src/base/R-4/R-${R_VER}.tar.gz && \
     tar xvzf R-${R_VER}.tar.gz && \

@@ -3,12 +3,11 @@
 req_packages <- c(
 "data.table",
 "tidyverse",
+"rjson",
 "RColorBrewer",
-"ggplot2",
 "ggpubr",
 "optparse",
 "qqman",
-"purrr",
 "glue",
 "fs",
 "R.utils",

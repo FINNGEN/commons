@@ -1,8 +1,8 @@
 # BIOINFORMATICS Docker image
 
-A Swiss knife for "bioinformatics" purposes, Ubuntu 18.04 base containing:
+A Swiss knife for "bioinformatics" purposes, Ubuntu 22.04 base containing:
 
-- python 3.6+
+- python 3.10+
 - python packages from [requirements.txt](requirements.txt)
 - R 4 built with openblas, shared library
 - R packages from [install_packages.R](install_packages.R)
@@ -30,39 +30,38 @@ docker build -t eu.gcr.io/finngen-refinery-dev/bioinformatics:VERSION -f Dockerf
 
 ## Current image in GCR
 
-The current image is `eu.gcr.io/finngen-refinery-dev/bioinformatics:0.7`
+The current image is `eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8`
 
 Program versions and libraries in the current image (printed in the end of image build):
 
 ```
-Linux 21930c8a723a 4.15.0-1032-gcp #34-Ubuntu SMP Wed May 8 13:02:46 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux
+Linux bc503bdbaa1e 5.15.0-1022-gcp #29-Ubuntu SMP Mon Oct 24 12:50:24 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+Python 3.10.6
+R version 4.2.2 (2022-10-31)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Ubuntu 22.04.1 LTS
 
-Python 3.6.9                                                                                          
-R version 4.0.5 (2021-03-31)                                           
-Platform: x86_64-pc-linux-gnu (64-bit)                             
-Running under: Ubuntu 18.04.5 LTS                                    
-                                                                
-Matrix products: default                                             
-BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/libopenblasp-r0.2.20.so                
-                                                                  
-locale:                                                              
- [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8
- [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8
- [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C
-[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C
+Matrix products: default
+BLAS/LAPACK: /usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so
+
+locale:
+ [1] LC_CTYPE=C.UTF-8       LC_NUMERIC=C           LC_TIME=C.UTF-8       
+ [4] LC_COLLATE=C.UTF-8     LC_MONETARY=C.UTF-8    LC_MESSAGES=C.UTF-8   
+ [7] LC_PAPER=C.UTF-8       LC_NAME=C              LC_ADDRESS=C          
+[10] LC_TELEPHONE=C         LC_MEASUREMENT=C.UTF-8 LC_IDENTIFICATION=C   
 
 attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base
+[1] stats     graphics  grDevices utils     datasets  methods   base     
 
 loaded via a namespace (and not attached):
-[1] compiler_4.0.5
-PLINK v1.90b6.21 64-bit (19 Oct 2020)
-PLINK v2.00a3LM AVX2 Intel (13 Apr 2021)
+[1] compiler_4.2.2
+PLINK v1.90b6.26 64-bit (2 Apr 2022)
+PLINK v2.00a3.7LM AVX2 Intel (24 Oct 2022)
 
 Welcome to qctool
-(version: 2.0.8, revision )
+(version: 2.2.0, revision: unknown)
 
-(C) 2009-2017 University of Oxford
+(C) 2009-2020 University of Oxford
 
 Usage: qctool <options>
 
@@ -78,18 +77,18 @@ Welcome to cat-bgen
 (C) 2009-2017 University of Oxford
 
 Usage: cat-bgen <options>
-bcftools 1.12
-Using htslib 1.12
-Copyright (C) 2021 Genome Research Ltd.
+bcftools 1.16
+Using htslib 1.16
+Copyright (C) 2022 Genome Research Ltd.
 License Expat: The MIT/Expat license
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
-tabix (htslib) 1.12
-Copyright (C) 2021 Genome Research Ltd.
-bgzip (htslib) 1.12
-Copyright (C) 2021 Genome Research Ltd.
-GNU Awk 4.1.4, API: 1.1 (GNU MPFR 4.0.1, GNU MP 6.1.2)
-Copyright (C) 1989, 1991-2016 Free Software Foundation.
+tabix (htslib) 1.16
+Copyright (C) 2022 Genome Research Ltd.
+bgzip (htslib) 1.16
+Copyright (C) 2022 Genome Research Ltd.
+GNU Awk 5.1.0, API: 3.0 (GNU MPFR 4.1.0, GNU MP 6.2.1)
+Copyright (C) 1989, 1991-2020 Free Software Foundation.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -103,247 +102,268 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see http://www.gnu.org/licenses/.
-datamash (GNU datamash) 1.2
-Copyright (C) 2017 Assaf Gordon
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+datamash (GNU datamash) 1.7
+Copyright (C) 2020 Assaf Gordon
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
 Written by Assaf Gordon.
-GNU Emacs 25.2.2
-Copyright (C) 2017 Free Software Foundation, Inc.
+GNU Emacs 27.1
+Copyright (C) 2020 Free Software Foundation, Inc.
 GNU Emacs comes with ABSOLUTELY NO WARRANTY.
 You may redistribute copies of GNU Emacs
 under the terms of the GNU General Public License.
 For more information about these matters, see the file named COPYING.
-VIM - Vi IMproved 8.0 (2016 Sep 12, compiled Oct 13 2020 15:49:09)
-Included patches: 1-1453
-Modified by pkg-vim-maintainers@lists.alioth.debian.org
-Compiled by pkg-vim-maintainers@lists.alioth.debian.org
+VIM - Vi IMproved 8.2 (2019 Dec 12, compiled Sep 13 2022 09:35:02)
+Included patches: 1-3995, 4563, 4646, 4774, 4895, 4899, 4901, 4919
+Modified by team+vim@tracker.debian.org
+Compiled by team+vim@tracker.debian.org
 Huge version without GUI.  Features included (+) or not (-):
-+acl               +farsi             +mouse_sgr         -tag_any_white
-+arabic            +file_in_path      -mouse_sysmouse    -tcl
-+autocmd           +find_in_path      +mouse_urxvt       +termguicolors
--autoservername    +float             +mouse_xterm       +terminal
--balloon_eval      +folding           +multi_byte        +terminfo
-+balloon_eval_term -footer            +multi_lang        +termresponse
--browse            +fork()            -mzscheme          +textobjects
-++builtin_terms    +gettext           +netbeans_intg     +timers
-+byte_offset       -hangul_input      +num64             +title
-+channel           +iconv             +packages          -toolbar
-+cindent           +insert_expand     +path_extra        +user_commands
--clientserver      +job               -perl              +vertsplit
--clipboard         +jumplist          +persistent_undo   +virtualedit
-+cmdline_compl     +keymap            +postscript        +visual
-+cmdline_hist      +lambda            +printer           +visualextra
-+cmdline_info      +langmap           +profile           +viminfo
-+comments          +libcall           -python            +vreplace
-+conceal           +linebreak         +python3           +wildignore
-+cryptv            +lispindent        +quickfix          +wildmenu
-+cscope            +listcmds          +reltime           +windows
-+cursorbind        +localmap          +rightleft         +writebackup
-+cursorshape       -lua               -ruby              -X11
-+dialog_con        +menu              +scrollbind        -xfontset
-+diff              +mksession         +signs             -xim
-+digraphs          +modify_fname      +smartindent       -xpm
--dnd               +mouse             +startuptime       -xsmp
--ebcdic            -mouseshape        +statusline        -xterm_clipboard
-+emacs_tags        +mouse_dec         -sun_workshop      -xterm_save
-+eval              +mouse_gpm         +syntax
-+ex_extra          -mouse_jsbterm     +tag_binary
-+extra_search      +mouse_netterm     +tag_old_static
++acl               +file_in_path      +mouse_urxvt       -tag_any_white
++arabic            +find_in_path      +mouse_xterm       -tcl
++autocmd           +float             +multi_byte        +termguicolors
++autochdir         +folding           +multi_lang        +terminal
+-autoservername    -footer            -mzscheme          +terminfo
+-balloon_eval      +fork()            +netbeans_intg     +termresponse
++balloon_eval_term +gettext           +num64             +textobjects
+-browse            -hangul_input      +packages          +textprop
+++builtin_terms    +iconv             +path_extra        +timers
++byte_offset       +insert_expand     -perl              +title
++channel           +ipv6              +persistent_undo   -toolbar
++cindent           +job               +popupwin          +user_commands
+-clientserver      +jumplist          +postscript        +vartabs
+-clipboard         +keymap            +printer           +vertsplit
++cmdline_compl     +lambda            +profile           +vim9script
++cmdline_hist      +langmap           -python            +viminfo
++cmdline_info      +libcall           +python3           +virtualedit
++comments          +linebreak         +quickfix          +visual
++conceal           +lispindent        +reltime           +visualextra
++cryptv            +listcmds          +rightleft         +vreplace
++cscope            +localmap          -ruby              +wildignore
++cursorbind        -lua               +scrollbind        +wildmenu
++cursorshape       +menu              +signs             +windows
++dialog_con        +mksession         +smartindent       +writebackup
++diff              +modify_fname      +sodium            -X11
++digraphs          +mouse             -sound             -xfontset
+-dnd               -mouseshape        +spell             -xim
+-ebcdic            +mouse_dec         +startuptime       -xpm
++emacs_tags        +mouse_gpm         +statusline        -xsmp
++eval              -mouse_jsbterm     -sun_workshop      -xterm_clipboard
++ex_extra          +mouse_netterm     +syntax            -xterm_save
++extra_search      +mouse_sgr         +tag_binary        
+-farsi             -mouse_sysmouse    -tag_old_static    
    system vimrc file: "$VIM/vimrc"
      user vimrc file: "$HOME/.vimrc"
  2nd user vimrc file: "~/.vim/vimrc"
       user exrc file: "$HOME/.exrc"
        defaults file: "$VIMRUNTIME/defaults.vim"
   fall-back for $VIM: "/usr/share/vim"
-Compilation: gcc -c -I. -Iproto -DHAVE_CONFIG_H   -Wdate-time  -g -O2 -fdebug-prefix-map=/build/vim-EfP9JP/vim-8.0.1453=. -fstack-protector-strong -Wformat -Werror=format-security -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1
-Linking: gcc   -Wl,-Bsymbolic-functions -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -o vim        -lm -ltinfo -lnsl  -lselinux  -lacl -lattr -lgpm -ldl     -L/usr/lib/python3.6/config-3.6m-x86_64-linux-gnu -lpython3.6m -lpthread -ldl -lutil -lm
-jq-1.5-1-a5b5cbe
-asn1crypto==0.24.0
-cryptography==2.1.4
-cycler==0.10.0
-idna==2.6
-joblib==1.0.1
-keyring==10.6.0
-keyrings.alt==3.0
-kiwisolver==1.3.1
-matplotlib==3.3.4
-numpy==1.19.5
-pandas==1.1.5
-Pillow==8.2.0
-pip==9.0.1
-pycrypto==2.6.1
-pygobject==3.26.1
-pyparsing==2.4.7
-python-dateutil==2.8.1
-pytz==2021.1
-pyxdg==0.25
-scikit-learn==0.24.1
-scipy==1.5.4
-SecretStorage==2.3.1
-setuptools==39.0.1
-six==1.11.0
-threadpoolctl==2.1.0
-wheel==0.30.0
+Compilation: gcc -c -I. -Iproto -DHAVE_CONFIG_H -Wdate-time -g -O2 -ffile-prefix-map=/build/vim-NA7QBf/vim-8.2.3995=. -flto=auto -ffat-lto-objects -flto=auto -ffat-lto-objects -fstack-protector-strong -Wformat -Werror=format-security -D_REENTRANT -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1 
+Linking: gcc -Wl,-Bsymbolic-functions -flto=auto -ffat-lto-objects -flto=auto -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -o vim -lm -ltinfo -lselinux -lsodium -lacl -lattr -lgpm -L/usr/lib/python3.10/config-3.10-x86_64-linux-gnu -lpython3.10 -lcrypt -ldl -lm -lm 
+jq-1.6
+Google Cloud SDK 411.0.0
+bq 2.0.83
+bundled-python3-unix 3.9.12
+core 2022.12.05
+gcloud-crc32c 1.0.0
+gsutil 5.17
+contourpy==1.0.6
+cycler==0.11.0
+dbus-python==1.2.18
+fonttools==4.38.0
+joblib==1.2.0
+kiwisolver==1.4.4
+matplotlib==3.6.2
+numpy==1.23.5
+packaging==22.0
+pandas==1.5.2
+Pillow==9.3.0
+pip==22.0.2
+PyGObject==3.42.1
+pyparsing==3.0.9
+python-dateutil==2.8.2
+pytz==2022.6
+scikit-learn==1.1.3
+scipy==1.9.3
+setuptools==59.6.0
+six==1.16.0
+threadpoolctl==3.1.0
+wheel==0.37.1
                     Package    Version
 abind                 abind      1.4-5
 askpass             askpass        1.1
 assertthat       assertthat      0.2.1
-backports         backports      1.2.1
+backports         backports      1.4.1
 base64enc         base64enc      0.1-3
-BH                       BH   1.75.0-0
-blob                   blob      1.2.1
-brew                   brew      1.0-6
-brio                   brio      1.1.1
-broom                 broom      0.7.6
-cachem               cachem      1.0.4
+bit                     bit      4.0.5
+bit64                 bit64      4.0.5
+blob                   blob      1.2.3
+brew                   brew      1.0-8
+brio                   brio      1.1.3
+broom                 broom      1.0.1
+bslib                 bslib      0.4.1
+cachem               cachem      1.0.6
 calibrate         calibrate      1.7.7
-callr                 callr      3.6.0
-car                     car     3.0-10
-carData             carData      3.0-4
+callr                 callr      3.7.3
+car                     car      3.1-1
+carData             carData      3.0-5
 cellranger       cellranger      1.1.0
-cli                     cli      2.4.0
-clipr                 clipr      0.7.1
+cli                     cli      3.4.1
+clipr                 clipr      0.8.0
 clisymbols       clisymbols      1.2.0
-CMplot               CMplot      3.6.2
-colorspace       colorspace      2.0-0
-commonmark       commonmark        1.7
-conquer             conquer      1.0.2
-corrplot           corrplot       0.84
+CMplot               CMplot      4.2.0
+colorspace       colorspace      2.0-3
+commonmark       commonmark      1.8.1
+corrplot           corrplot       0.92
 cowplot             cowplot      1.1.1
-cpp11                 cpp11      0.2.7
-crayon               crayon      1.4.1
-credentials     credentials      1.3.0
-curl                   curl        4.3
-data.table       data.table     1.14.0
-DBI                     DBI      1.1.1
-dbplyr               dbplyr      2.1.1
-desc                   desc      1.3.0
-devtools           devtools      2.4.0
-diffobj             diffobj      0.3.4
-digest               digest     0.6.27
-dplyr                 dplyr      1.0.5
-ellipsis           ellipsis      0.3.1
-evaluate           evaluate       0.14
-fansi                 fansi      0.4.2
-farver               farver      2.1.0
+cpp11                 cpp11      0.4.3
+crayon               crayon      1.5.2
+credentials     credentials      1.3.2
+curl                   curl      4.3.3
+data.table       data.table     1.14.6
+DBI                     DBI      1.1.3
+dbplyr               dbplyr      2.2.1
+desc                   desc      1.4.2
+diffobj             diffobj      0.3.5
+digest               digest     0.6.30
+downlit             downlit      0.4.2
+dplyr                 dplyr     1.0.10
+dtplyr               dtplyr      1.2.2
+ellipsis           ellipsis      0.3.2
+evaluate           evaluate       0.18
+fansi                 fansi      1.0.3
+farver               farver      2.1.1
 fastmap             fastmap      1.1.0
-forcats             forcats      0.5.1
-fs                       fs      1.5.0
-generics           generics      0.1.0
-gert                   gert      1.3.0
+fontawesome     fontawesome      0.4.0
+forcats             forcats      0.5.2
+fs                       fs      1.5.2
+gargle               gargle      1.2.1
+generics           generics      0.1.3
+gert                   gert      1.9.2
 getopt               getopt     1.20.3
-ggplot2             ggplot2      3.3.3
-ggpubr               ggpubr      0.4.0
-ggrepel             ggrepel      0.9.1
+ggplot2             ggplot2      3.4.0
+ggpubr               ggpubr      0.5.0
+ggrepel             ggrepel      0.9.2
 ggsci                 ggsci        2.9
-ggsignif           ggsignif      0.6.1
-gh                       gh      1.2.1
-gitcreds           gitcreds      0.1.1
-glue                   glue      1.4.2
+ggsignif           ggsignif      0.6.4
+gh                       gh      1.3.1
+gitcreds           gitcreds      0.1.2
+glue                   glue      1.6.2
+googledrive     googledrive      2.0.0
+googlesheets4 googlesheets4      1.0.1
 gridExtra         gridExtra        2.3
-gtable               gtable      0.3.0
-haven                 haven      2.3.1
-highr                 highr        0.8
-hms                     hms      1.0.0
-htmltools         htmltools    0.5.1.1
-httr                   httr      1.4.2
+gtable               gtable      0.3.1
+haven                 haven      2.5.1
+highr                 highr        0.9
+hms                     hms      1.1.2
+htmltools         htmltools      0.5.4
+htmlwidgets     htmlwidgets      1.5.4
+httpuv               httpuv      1.6.6
+httr                   httr      1.4.4
+ids                     ids      1.0.1
 ini                     ini      0.3.1
-isoband             isoband      0.2.4
+isoband             isoband      0.2.6
 janitor             janitor      2.1.0
-jsonlite           jsonlite      1.7.2
-knitr                 knitr       1.31
+jquerylib         jquerylib      0.1.4
+jsonlite           jsonlite      1.8.4
+knitr                 knitr       1.41
 labeling           labeling      0.4.2
-lifecycle         lifecycle      1.0.0
-lme4                   lme4     1.1-26
-lubridate         lubridate     1.7.10
-magrittr           magrittr      2.0.1
-maptools           maptools      1.1-1
-markdown           markdown        1.1
-MatrixModels   MatrixModels      0.5-0
-matrixStats     matrixStats     0.58.0
-memoise             memoise      2.0.0
-mime                   mime       0.10
-minqa                 minqa      1.2.4
-modelr               modelr      0.1.8
+later                 later      1.3.0
+lifecycle         lifecycle      1.0.3
+lme4                   lme4     1.1-31
+lubridate         lubridate      1.9.0
+magrittr           magrittr      2.0.3
+MatrixModels   MatrixModels      0.5-1
+memoise             memoise      2.0.1
+mime                   mime       0.12
+miniUI               miniUI    0.1.1.1
+minqa                 minqa      1.2.5
+modelr               modelr     0.1.10
 munsell             munsell      0.5.0
-nloptr               nloptr    1.2.2.2
+nloptr               nloptr      2.0.3
 numDeriv           numDeriv 2016.8-1.1
-openssl             openssl      1.4.3
-openxlsx           openxlsx      4.2.3
-optparse           optparse      1.6.6
-patchwork         patchwork      1.1.1
+openssl             openssl      2.0.5
+optparse           optparse      1.7.3
+patchwork         patchwork      1.1.2
 pbkrtest           pbkrtest      0.5.1
-pillar               pillar      1.6.0
-pkgbuild           pkgbuild      1.2.0
+pillar               pillar      1.8.1
+pkgbuild           pkgbuild      1.4.0
 pkgconfig         pkgconfig      2.0.3
-pkgload             pkgload      1.2.1
-plyr                   plyr      1.8.6
-polynom             polynom      1.4-0
+pkgload             pkgload      1.3.2
+plyr                   plyr      1.8.8
+polynom             polynom      1.4-1
 praise               praise      1.0.0
 prettyunits     prettyunits      1.1.1
-processx           processx      3.5.1
+processx           processx      3.8.0
+profvis             profvis      0.3.7
 progress           progress      1.2.2
-ps                       ps      1.6.0
-purrr                 purrr      0.3.4
-qqman                 qqman      0.1.4
-quantreg           quantreg       5.85
-R.methodsS3     R.methodsS3      1.8.1
-R.oo                   R.oo     1.24.0
-R.utils             R.utils     2.10.1
-R6                       R6      2.5.0
+promises           promises    1.2.0.1
+ps                       ps      1.7.2
+purrr                 purrr      0.3.5
+qqman                 qqman      0.1.8
+quantreg           quantreg       5.94
+R.methodsS3     R.methodsS3      1.8.2
+R.oo                   R.oo     1.25.0
+R.utils             R.utils     2.12.2
+R6                       R6      2.5.1
 rappdirs           rappdirs      0.3.3
-rcmdcheck         rcmdcheck      1.3.3
-RColorBrewer   RColorBrewer      1.1-2
-Rcpp                   Rcpp      1.0.6
-RcppArmadillo RcppArmadillo 0.10.4.0.0
-RcppEigen         RcppEigen  0.3.3.9.1
-readr                 readr      1.4.0
-readxl               readxl      1.3.1
+rcmdcheck         rcmdcheck      1.4.0
+RColorBrewer   RColorBrewer      1.1-3
+Rcpp                   Rcpp      1.0.9
+RcppArmadillo RcppArmadillo 0.11.4.2.1
+RcppEigen         RcppEigen  0.3.3.9.3
+readr                 readr      2.1.3
+readxl               readxl      1.4.1
 rematch             rematch      1.0.1
 rematch2           rematch2      2.1.2
-remotes             remotes      2.3.0
-reprex               reprex      2.0.0
-rio                     rio     0.5.26
-rlang                 rlang     0.4.10
-rmarkdown         rmarkdown        2.7
-RNOmni               RNOmni      1.0.0
-roxygen2           roxygen2      7.1.1
-rprojroot         rprojroot      2.0.2
-rstatix             rstatix      0.7.0
-rstudioapi       rstudioapi       0.13
-rversions         rversions      2.0.2
-rvest                 rvest      1.0.0
-scales               scales      1.1.1
+remotes             remotes      2.4.2
+reprex               reprex      2.0.2
+rlang                 rlang      1.0.6
+rmarkdown         rmarkdown       2.18
+RNOmni               RNOmni      1.0.1
+roxygen2           roxygen2      7.2.2
+rprojroot         rprojroot      2.0.3
+rstatix             rstatix      0.7.1
+rstudioapi       rstudioapi       0.14
+rversions         rversions      2.1.2
+rvest                 rvest      1.0.3
+sass                   sass      0.4.4
+scales               scales      1.2.1
 selectr             selectr      0.4-2
-sessioninfo     sessioninfo      1.1.1
+sessioninfo     sessioninfo      1.2.2
+shiny                 shiny      1.7.3
 snakecase         snakecase     0.11.0
-sp                       sp      1.4-5
+sourcetools     sourcetools      0.1.7
 SparseM             SparseM       1.81
-statmod             statmod     1.4.35
-stringi             stringi      1.5.3
-stringr             stringr      1.4.0
-sys                     sys        3.4
-testthat           testthat      3.0.2
-tibble               tibble      3.1.0
+stringi             stringi      1.7.8
+stringr             stringr      1.5.0
+sys                     sys      3.4.1
+systemfonts     systemfonts      1.0.4
+testthat           testthat      3.1.5
+tibble               tibble      3.1.8
 tidylog             tidylog      1.0.2
-tidyr                 tidyr      1.1.3
-tidyselect       tidyselect      1.1.0
-tidyverse         tidyverse      1.3.0
-tinytex             tinytex       0.31
-usethis             usethis      2.0.1
-utf8                   utf8      1.2.1
-vctrs                 vctrs      0.3.7
-viridis             viridis      0.5.1
-viridisLite     viridisLite      0.4.0
-waldo                 waldo      0.2.5
-whisker             whisker        0.4
-withr                 withr      2.4.1
-xfun                   xfun       0.22
-xml2                   xml2      1.3.2
+tidyr                 tidyr      1.2.1
+tidyselect       tidyselect      1.2.0
+tidyverse         tidyverse      1.3.2
+timechange       timechange      0.1.1
+tinytex             tinytex       0.42
+tzdb                   tzdb      0.3.0
+urlchecker       urlchecker      1.0.1
+usethis             usethis      2.1.6
+utf8                   utf8      1.2.2
+uuid                   uuid      1.1-0
+vctrs                 vctrs      0.5.1
+viridis             viridis      0.6.2
+viridisLite     viridisLite      0.4.1
+vroom                 vroom      1.6.0
+waldo                 waldo      0.4.0
+whisker             whisker      0.4.1
+withr                 withr      2.5.0
+xfun                   xfun       0.35
+xml2                   xml2      1.3.3
 xopen                 xopen      1.0.0
-yaml                   yaml      2.2.1
-zip                     zip      2.1.1
+xtable               xtable      1.8-4
+yaml                   yaml      2.3.6
+zip                     zip      2.2.2
 ```
