@@ -12,7 +12,7 @@ task join_annot {
 		disks: "local-disk ${local_disk} HDD"
 		cpu:"1"
 		zones: "europe-west1-b europe-west1-c europe-west1-d"
-		preemptible: 1
+		preemptible: 0
 		noAddress: true
 	}
 
@@ -79,7 +79,7 @@ task small {
 		disks: "local-disk ${local_disk} HDD"
 		cpu:"1"
 		zones: "europe-west1-b europe-west1-c europe-west1-d"
-		preemptible: 1
+		preemptible: 0
 		noAddress: true
 	}
 
@@ -113,7 +113,7 @@ task small {
 task extract {
 
 	File vcf
-	Int local_disk = ceil(size(vcf, "G")) + 10
+	Int local_disk = ceil(size(vcf, "G")) + 100
 	String docker
 	String outfile=basename(vcf) + ".annot.gz"
 
@@ -123,7 +123,7 @@ task extract {
 		disks: "local-disk ${local_disk} HDD"
 		cpu:"1"
 		zones: "europe-west1-b europe-west1-c europe-west1-d"
-		preemptible: 1
+		preemptible: 0
 		noAddress: true
 	}
 
@@ -287,7 +287,7 @@ task add_gnomad {
     Array[String] exome_cols
     Array[String] genome_cols
 
-    Int local_disk = ceil(size(annotation_file, "G")) + ceil(size(gnomad_genomes, "G")) + ceil(size(gnomad_genomes, "G")) * 2 + 10
+    Int local_disk = (ceil(size(annotation_file, "G")) + ceil(size(gnomad_genomes, "G")) + ceil(size(gnomad_exomes, "G"))) * 2
 
 	String docker
 
