@@ -6,6 +6,7 @@ workflow map_vcf{
 task vcf_task{
     String vcf_dl_link
     File chrom_map
+    File fasta
     String docker
 
     String vcf_index_dl_link = vcf_dl_link+".tbi"
@@ -19,8 +20,13 @@ task vcf_task{
         #download
         curl -o vcf_file.vcf.gz ${vcf_dl_link}
         curl -o vcf_file.vcf.gz.tbi ${vcf_index_dl_link}
+        cat ${chrom_map}|sed "s/23$/X/g;s/24$/Y/g;s/25$/M/g;s/\t/\tchr/g" > fasta_compliant_chrom_map
+        paste <(cut -f 2 fasta_compliant_chrom_map) <(cut -f 2 ${chrom_map}) > chrtonum
         #rename & resctrict chromosomes
-        bcftools view -r ${sep=',' old_chr_names} vcf_file.vcf.gz|bcftools annotate --rename-chr ${chrom_map}|bgzip -@4 > output.vcf.gz 
+        bcftools view   vcf_file.vcf.gz -m 2 -M 2 -r ${sep=',' old_chr_names} -Ou| \
+        bcftools annotate --rename-chr fasta_compliant_chrom_map -Ou | \
+        bcftools norm -f ${fasta} -c wx  -Ou| \
+        bcftools annotate --rename-chr chrtonum -Ov|bgzip -@4 > output.vcf.gz 
         tabix -p vcf output.vcf.gz
     >>>
 
@@ -30,6 +36,7 @@ task vcf_task{
         memory: "8 GB"
         disks:"local-disk 100 HDD"
         preemptible: 0
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
     }
 
     output {
