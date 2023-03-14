@@ -1,0 +1,5 @@
+{
+    "filter_sumstats_by_variants.sumstats_loc":"gs://r11-data/regenie/demopheno/r11_demopheno_sumstats.txt",
+    "filter_sumstats_by_variants.filter.variant_file":"gs://r11-data/R11_variants_info_0.60.txt.gz",
+    "filter_sumstats_by_variants.filter.cpra_sep":":"
+}
