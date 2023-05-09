@@ -1,5 +1,5 @@
 {
-    "filter_vcf_by_variants_to_bgen.vcf_files": "gs://r5_data/R5_vcf.txt",
-    "filter_vcf_by_variants_to_bgen.filter_to_bgen.variant_file": "gs://r5_data/annotations/R5_coding_variants_info0.6.txt.gz",
-    "filter_vcf_by_variants_to_bgen.combine.outfile": "R5_coding_variants_info06.bgen"
+    "filter_vcf_by_variants_to_bgen.vcf_files": "gs://r11-data/forceimpute/force_imputed_vcf_loc",
+    "filter_vcf_by_variants_to_bgen.filter_to_bgen.variant_file": "gs://r11-data/forceimpute/force_impute_coding_panelaf_lt_0.015_r11",
+    "filter_vcf_by_variants_to_bgen.combine.outfile": "R11_force_impute_coding_panelaf_lt_0.015.bgen"
 }
