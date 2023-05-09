@@ -1,0 +1,10 @@
+{
+    "plink_grm_bgen_input.bgenfilelist": "gs://r11-data/bgen/finngen_R11_bgen_chrom.txt",
+    "plink_grm_bgen_input.filter_prune.include_variants": "gs://r11-data/grm/R11_variants_info_allbatches_0.90.txt",
+    "plink_grm_bgen_input.filter_prune.include_samples": "gs://r11-data/plink/finngen_R11.fam",
+    "plink_grm_bgen_input.filter_prune.geno_missing": 0.03,
+    "plink_grm_bgen_input.filter_prune.maf": 0.01,
+    "plink_grm_bgen_input.filter_prune.ld": "1500kb 1 0.2",
+    "plink_grm_bgen_input.merge_plink.out": "R11_GRM_V0_LD_0.2",
+    "plink_grm_bgen_input.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
+}
