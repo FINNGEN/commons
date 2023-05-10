@@ -11,11 +11,11 @@ task snpstats {
     }
 
     runtime {
-        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.5"
+        docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
         cpu: 1
         memory: "1 GB"
         disks: "local-disk 50 HDD"
-        zones: "europe-west1-b"
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 1
     }
 }
@@ -48,11 +48,11 @@ task combine {
     }
 
     runtime {
-        docker: "gcr.io/finngen-refinery-dev/bioinformatics:0.5"
+        docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
         cpu: 1
         memory: "1 GB"
         disks: "local-disk 20 HDD"
-        zones: "europe-west1-b"
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 1
     }
 }
