@@ -45,6 +45,7 @@ task combine {
 
     output {
         File out = outfile
+	File tbi = outfile + ".tbi"
     }
 
     runtime {
