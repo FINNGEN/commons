@@ -182,13 +182,12 @@ if __name__=="__main__":
             ####
             #if chrom and pos match and there are items in the ref vars, we try to match.
             # If chrom and pos don't match, we reset ref vars
-            rsid = 'NA'
+            rsids = []
             
             for r in ref_vars:
                 if r[ref_h_idx['REF']] == ref and alt in r[ref_h_idx['ALT']].split(','):
-                    rsid = r[ref_h_idx['ID']]
-                    break
-            
+                    rsids.append(r[ref_h_idx['ID']])
+            rsid = ",".join(rsids)
             out_write(f"{line}{SEP}{rsid}\n")
     if args.out:
         OUTPUT.close()
