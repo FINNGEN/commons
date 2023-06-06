@@ -3,7 +3,7 @@ task filter_to_bgen {
     File variant_file
     File vcf
     String base_vcf = basename(vcf)
-    String genofield="GP"
+    String genofield
     String ofiletype="bgen_v1.2"
     Int precision=8
     Float input_rounding_error=0.005
@@ -11,6 +11,7 @@ task filter_to_bgen {
     command <<<
 
         awk 'NR==FNR{a[$1]} NR>FNR && ($0~"^#" || $3 in a)' ${variant_file} <(zcat -f ${vcf}) | \
+        sed 's/^##fileformat=VCFv4.3/##fileformat=VCFv4.2/' | \
 	qctool -g - -vcf-genotype-field ${genofield} -filetype vcf -og ${base_vcf}.filtered.bgen -os ${base_vcf}.filtered.bgen.sample \
 	-bgen-compression zlib -ofiletype ${ofiletype} -bgen-bits ${precision} -bgen-permitted-input-rounding-error ${input_rounding_error}
     >>>
