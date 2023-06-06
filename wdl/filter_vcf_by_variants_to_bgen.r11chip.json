@@ -1,0 +1,6 @@
+{
+    "filter_vcf_by_variants_to_bgen.vcf_files": "gs://r11-data/chip/vcf_loc_noymt",
+    "filter_vcf_by_variants_to_bgen.filter_to_bgen.variant_file": "gs://r11-data/chip/coding_vars_chip",
+    "filter_vcf_by_variants_to_bgen.filter_to_bgen.genofield": "GT",
+    "filter_vcf_by_variants_to_bgen.combine.outfile": "R11_chip_coding.bgen"
+}

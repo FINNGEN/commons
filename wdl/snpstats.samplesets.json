@@ -1,0 +1,4 @@
+{
+    "qctool_snpstats.genolistfile": "gs://r10-data/bgen/finngen_R10_bgen_chunks_refinery.txt",
+    "qctool_snpstats.samplelistfile": "gs://r10-data/pheno/recessive_replication_phenodata_loc",
+}

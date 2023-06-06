@@ -4,23 +4,26 @@ task snpstats {
 
     input {
         File genofile
+	File samplefile = genofile + ".sample"
+        File restrict_to_samples
     }
 
-    command {
-        qctool -g ${genofile} -snp-stats -osnp ${basename(genofile)}.snp_stats.txt
-    }
+    command <<<
+        qctool -g ~{genofile} -s ~{samplefile} -incl-samples ~{restrict_to_samples} \
+         -snp-stats -osnp ~{basename(genofile)}.~{basename(restrict_to_samples)}.snp_stats.txt
+    >>>
 
     output {
-        File out = basename(genofile) + ".snp_stats.txt"
+        File out = basename(genofile) + "." + basename(restrict_to_samples) + ".snp_stats.txt"
     }
 
     runtime {
         docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
         cpu: 1
-        memory: "3 GB"
-        disks: "local-disk " + 2 * (ceil(size(genofile, "G"))) + " HDD"
+        memory: "1 GB"
+        disks: "local-disk 50 HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
-        preemptible: 0
+        preemptible: 1
     }
 }
 
@@ -58,7 +61,7 @@ task combine {
         docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
         cpu: 1
         memory: "1 GB"
-        disks: "local-disk 20 HDD"
+        disks: "local-disk 200 HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
         preemptible: 1
     }
@@ -69,15 +72,18 @@ workflow qctool_snpstats {
     input {
         File genolistfile
         Array[String] genofiles = read_lines(genolistfile)
+    	File samplelistfile
+	Array[String] samplefiles = read_lines(samplelistfile)
     }
 
-    scatter (genofile in genofiles) {
-        call snpstats {
-            input: genofile=genofile
+    scatter (samplefile in samplefiles) {
+        scatter (genofile in genofiles) {
+            call snpstats {
+                input: genofile=genofile, restrict_to_samples=samplefile
+            }
         }
-    }
-
-    call combine {
-        input: snpstatfiles=snpstats.out
+        call combine {
+            input: outfile=basename(samplefile + ".snpstats.tsv.gz"), snpstatfiles=snpstats.out
+        }
     }
 }
