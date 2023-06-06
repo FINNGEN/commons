@@ -1,4 +1,4 @@
 {
-    "qctool_snpstats.bgenlistfile": "gs://r11-data/bgen/r11_X_bgen_loc",
-    "qctool_snpstats.combine.outfile": "R11_X_snpstats"
+    "qctool_snpstats.genolistfile": "gs://fg-exomes/daly_finnish_callset_gnomad_v4_vcf_loc",
+    "qctool_snpstats.combine.outfile": "daly_finnish_callset_gnomad_v4.snpstats.tsv.gz"
 }
