@@ -23,7 +23,7 @@ task vcf_task{
         cat ${chrom_map}|sed "s/23$/X/g;s/24$/Y/g;s/25$/M/g;s/\t/\tchr/g" > fasta_compliant_chrom_map
         paste <(cut -f 2 fasta_compliant_chrom_map) <(cut -f 2 ${chrom_map}) > chrtonum
         #rename & resctrict chromosomes
-        bcftools view   vcf_file.vcf.gz -m 2 -M 2 -r ${sep=',' old_chr_names} -Ou| \
+        bcftools view vcf_file.vcf.gz -r ${sep=',' old_chr_names} -Ou| \
         bcftools annotate --rename-chr fasta_compliant_chrom_map -Ou | \
         bcftools norm -f ${fasta} -c wx  -Ou| \
         bcftools annotate --rename-chr chrtonum -Ov|bgzip -@4 > output.vcf.gz 
