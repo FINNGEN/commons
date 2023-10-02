@@ -1,0 +1,6 @@
+{
+    "qctool_snpstats.genolistfile": "gs://r11-data/bgen/r11_X_bgen_loc",
+    "qctool_snpstats.snpstats.is_bgen": true,
+    "qctool_snpstats.snpstats.restrict_to_samples": "gs://r11-data/maleX/r11_analyzed_females",
+    "qctool_snpstats.combine.outfile": "R11_X_snpstats_analyzedfemales.tsv.gz"
+}

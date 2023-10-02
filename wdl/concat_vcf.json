@@ -1,0 +1,4 @@
+{
+    concat_vcf.header_file: "gs://finnish_exomes/subset_chr1.vcf.bgz/header.bgz",
+    concat_vcf.chr_part_files_loc: "gs://finnish_exomes/chr_part_files_loc"
+}
