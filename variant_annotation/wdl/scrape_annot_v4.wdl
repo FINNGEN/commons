@@ -1,4 +1,3 @@
-
 task join_annot {
 
 	Array[File] files
@@ -453,6 +452,331 @@ task add_gnomad {
     }
 }
 
+task download_genes {
+
+    String docker
+    String genome_build
+    String genes_out_fname = "genes-b" + genome_build + ".bed"
+
+    command <<<
+    
+    python3 << CODE
+
+    import io
+    import os
+    import re
+    import csv
+    import wget
+    import gzip
+    import boltons.iterutils
+    from contextlib import contextmanager
+
+    good_genetypes = set('''
+    protein_coding
+    IG_C_gene
+    IG_D_gene
+    IG_J_gene
+    IG_V_gene
+    TR_C_gene
+    TR_D_gene
+    TR_J_gene
+    TR_V_gene
+    '''.split())
+    nonpseudo_genetypes = set('''
+    3prime_overlapping_ncRNA
+    antisense
+    bidirectional_promoter_lncRNA
+    lincRNA
+    macro_lncRNA
+    miRNA
+    misc_RNA
+    Mt_rRNA
+    Mt_tRNA
+    non_coding
+    processed_transcript
+    ribozyme
+    rRNA
+    sRNA
+    scRNA
+    scaRNA
+    sense_intronic
+    sense_overlapping
+    snRNA
+    snoRNA
+    TEC
+    vaultRNA
+    '''.split()).union(good_genetypes)
+
+    chrom_order_list = [str(i) for i in range(1, 22 + 1)] + ["X", "Y", "MT"]
+    chrom_order = {chromosome: index for index, chromosome in enumerate(chrom_order_list)}
+    chrom_order["23"] = 22
+    chrom_order["24"] = 23
+    chrom_order["25"] = 24
+    chrom_aliases = {"23": "X", "24": "Y", "25": "MT", "M": "MT"}
+
+    @contextmanager
+    def read_gzip(filepath):
+        # handles buffering # TODO: profile whether this is fast.
+        with gzip.open(
+            filepath, "rb"
+        ) as f:  # leave in binary mode (default), let TextIOWrapper decode
+            with io.BufferedReader(f, buffer_size=2 ** 18) as g:  # 256KB buffer
+                with io.TextIOWrapper(g) as h:  # bytes -> unicode
+                    yield h
+
+    def get_all_genes(gencode_filepath):
+        with read_gzip(gencode_filepath) as f:
+            for l in f:
+                if l.startswith('#'): continue
+                r = l.split('\t')
+                if r[2] != 'gene': continue
+
+                try:
+                    # Remove pseudogenes and other unwanted types of genes.
+                    genetype = re.search(r'gene_type "(.+?)"', r[8]).group(1)
+                    assert 'pseudogene' in genetype or genetype in nonpseudo_genetypes
+                    if genetype not in good_genetypes: continue
+
+                    assert r[0].startswith('chr')
+                    chrom = r[0][3:]
+                    if chrom in chrom_aliases: chrom = chrom_aliases[chrom]
+                    elif chrom not in chrom_order: continue
+                    pos1, pos2 = int(r[3]), int(r[4])
+                    assert pos1 < pos2
+                    symbol = re.search(r'gene_name "(.+?)"', r[8]).group(1)
+                    full_ensg = re.search(r'gene_id "(ENSGR?[0-9\._A-Z]+?)"', r[8]).group(1)
+                    ensg = full_ensg.split('.')[0]
+                except Exception:
+                    print('ERROR on line:', r)
+                    raise
+
+                yield {
+                    'chrom': chrom,
+                    'start': pos1,
+                    'end': pos2,
+                    'symbol': symbol,
+                    'ensg': ensg,
+                    'full_ensg': full_ensg,
+                }
+
+    def dedup_ensg(genes):
+        # If two genes share the same "ENSGXXXX" (before period), then use their "ENSGXXXX.XXX" instead.
+        for ensg_group in boltons.iterutils.bucketize(genes, key=lambda g:g['ensg']).values():
+            if len(ensg_group) == 1:
+                del ensg_group[0]['full_ensg']
+                yield ensg_group[0]
+            else:
+                # These are all psuedo-autosomals across X/Y
+                assert sorted(g['chrom'] for g in ensg_group) == ['X', 'Y']
+                for g in ensg_group:
+                    g['ensg'] = g['symbol'] = g.pop('full_ensg')
+                    yield g
+
+    def dedup_symbol(genes):
+        # If genes share the same SYMBOL, check that they are adjacent and then merge them
+        for symbol_group in boltons.iterutils.bucketize(genes, key=lambda g:g['symbol']).values():
+            if len(symbol_group) == 1:
+                yield symbol_group[0]
+            elif (boltons.iterutils.same(g['chrom'] for g in symbol_group) and
+                all(g1['end'] + 600e3 > g2['start'] for g1,g2 in boltons.iterutils.pairwise(sorted(symbol_group, key=lambda g:g['start'])))):
+                # 600kb is long enough to resolve all problems.
+                yield {
+                    'chrom': symbol_group[0]['chrom'],
+                    'start': min(g['start'] for g in symbol_group),
+                    'end': min(g['end'] for g in symbol_group),
+                    'symbol': symbol_group[0]['symbol'],
+                    'ensg': ','.join(g['ensg'] for g in symbol_group),
+                }
+            else:
+                print('broken symbol_group:')
+                for g in symbol_group:
+                    print('- {:12,}\t{:12,}\t{}'.format(g['start'], g['end'], g))
+                raise
+    
+    if ${genome_build} == '37':
+        url="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_25/GRCh37_mapping/gencode.v25lift37.annotation.gtf.gz"
+    else:
+        url="ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_25/gencode.v25.annotation.gtf.gz"
+    
+    wget.download(url=url, out="gencode.annotation.gtf.gz")
+    genes = get_all_genes("gencode.annotation.gtf.gz")
+    genes = dedup_ensg(genes)
+    genes = dedup_symbol(genes)
+
+    with open("${genes_out_fname}", 'w') as f:
+        writer = csv.DictWriter(f, delimiter='\t', fieldnames='chrom start end symbol ensg'.split(), lineterminator='\n')
+        writer.writerows(genes)
+
+    CODE
+
+    >>>    
+
+    output {
+        File genes_out = "${genes_out_fname}"
+    }
+
+    runtime {
+        docker: "${docker}"
+        memory: "2 GB"
+        cpu: "1"
+        disks: "local-disk 10 SSD"
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        preemptible: 2
+        noAddress: false
+    }
+
+}
+
+task add_nearest_genes {
+
+    File genes
+    String docker
+    File annotation
+    String fout = basename(annotation)
+    Int disk_size = ceil(size(annotation, "GB")*3) + 20
+
+    command <<<
+
+    touch ${fout}
+
+    python3 << CODE
+
+    import csv
+    import sys
+    import gzip
+    import bgzip
+    import bisect
+    import argparse
+    import collections
+    if sys.version_info.major == 3 and sys.version_info.minor >= 10:
+        from collections.abc import MutableSet
+        collections.MutableSet = collections.abc.MutableSet
+    else: 
+        from collections import MutableSet
+    import intervaltree
+    import boltons.iterutils
+
+    chrom_order_list = [str(i) for i in range(1, 22 + 1)] + ["X", "Y", "MT"]
+    chrom_order = {chromosome: index for index, chromosome in enumerate(chrom_order_list)}
+    chrom_order["23"] = 22
+    chrom_order["24"] = 23
+    chrom_order["25"] = 24
+
+    def get_gene_tuples(genes_filepath=None, include_ensg=False):
+        """
+        Get gene tuples.
+
+        Very unsure what this is about.
+
+        @param include_ensg:
+        @return: 4-tuple
+        """
+        with open(genes_filepath, encoding="utf-8") as file:
+            for row in csv.reader(file, delimiter="\t"):
+                assert row[0] in chrom_order, row[0]
+                if include_ensg:
+                    yield row[0], int(row[1]), int(row[2]), row[3], row[4]
+                else:
+                    yield row[0], int(row[1]), int(row[2]), row[3]
+
+    class BisectFinder(object):
+        '''Given a list like [(123, 'foo'), (125, 'bar')...], BisectFinder helps you find the things before and after 124.'''
+        def __init__(self, tuples):
+            '''tuples is like [(123, 'foo'),...]'''
+            tuples = sorted(tuples, key=lambda t:t[0])
+            self._nums, self._values = list(zip(*tuples))
+        def get_item_before(self, pos):
+            '''If we get an exact match, let's return it'''
+            idx = bisect.bisect_right(self._nums, pos) - 1 # note: bisect_{left,right} just deals with ties.
+            if idx < 0: return None # It's fallen off the beginning!
+            return (self._nums[idx], self._values[idx])
+        def get_item_after(self, pos):
+            if pos > self._nums[-1]: return None # it's fallen off the end!
+            idx = bisect.bisect_left(self._nums, pos)
+            return (self._nums[idx], self._values[idx])
+
+    class GeneAnnotator(object):
+        def __init__(self, interval_tuples):
+            '''intervals is like [('22', 12321, 12345, 'APOL1'), ...]'''
+            self._its = {}
+            self._gene_starts = {}
+            self._gene_ends = {}
+            for interval_tuple in interval_tuples:
+                chrom, pos_start, pos_end, gene_name = interval_tuple
+                assert isinstance(pos_start, int)
+                assert isinstance(pos_end, int)
+                if chrom not in self._its:
+                    self._its[chrom] = intervaltree.IntervalTree()
+                    self._gene_starts[chrom] = []
+                    self._gene_ends[chrom] = []
+                self._its[chrom].add(intervaltree.Interval(pos_start, pos_end, gene_name))
+                self._gene_starts[chrom].append((pos_start, gene_name))
+                self._gene_ends[chrom].append((pos_end, gene_name))
+            for chrom in self._its:
+                self._gene_starts[chrom] = BisectFinder(self._gene_starts[chrom])
+                self._gene_ends[chrom] = BisectFinder(self._gene_ends[chrom])
+        
+        def annotate_position(self, chrom, pos):
+            if chrom == 'MT': chrom = 'M'
+            if chrom not in self._its:
+                return ''
+            overlapping_genes = self._its[chrom].search(pos)
+            if overlapping_genes:
+                return ','.join(sorted(boltons.iterutils.unique_iter(og.data for og in overlapping_genes)))
+            nearest_gene_end = self._gene_ends[chrom].get_item_before(pos)
+            nearest_gene_start = self._gene_starts[chrom].get_item_after(pos)        
+            if nearest_gene_end is None or nearest_gene_start is None:
+                if nearest_gene_end is not None: return nearest_gene_end[1]
+                if nearest_gene_start is not None: return nearest_gene_start[1]
+                print('This is very surprising - {!r} {!r}'.format(chrom, pos))
+                return ''
+            dist_to_nearest_gene_end = abs(nearest_gene_end[0] - pos)
+            dist_to_nearest_gene_start = abs(nearest_gene_start[0] - pos)
+            if dist_to_nearest_gene_end < dist_to_nearest_gene_start:
+                return nearest_gene_end[1]
+            return nearest_gene_start[1]
+
+    def annotate_genes(in_filepath, genes_filepath, out_filepath):
+        '''Both args are filepaths'''
+        ga = GeneAnnotator(get_gene_tuples(genes_filepath=genes_filepath))
+        with open(out_filepath, 'ab') as raw, gzip.open(in_filepath, 'rt') as in_f:
+            reader = csv.reader(in_f, delimiter='\t', lineterminator="\n")
+            for i, v in enumerate(reader):
+                if i == 0:
+                    h = {f:j for j,f in enumerate(v)}
+                    v.append('nearest_genes')
+                else:
+                    ng = ga.annotate_position(v[h['chr']], int(v[h['pos']]))
+                    v.append(ng)
+                line = '\t'.join(v) + '\n'
+                with bgzip.BGZipWriter(raw) as out_f:
+                    out_f.write(line.encode())
+
+    annotate_genes("${annotation}", "${genes}", "${fout}")
+
+    CODE
+
+    tabix -b 3 -e 3 -s 2 "${fout}"
+
+    >>>    
+
+    output {
+        File anno_ng_out = "${fout}"
+		File anno_ng_out_tbi="${fout}.tbi"
+    }
+
+    runtime {
+        docker: "${docker}"
+        memory: "16 GB"
+        cpu: "4"
+        disks: "local-disk ${disk_size} HDD"
+        zones: "europe-west1-b europe-west1-c europe-west1-d"
+        preemptible: 2
+    }
+
+}
+
+
 workflow scrape_annots {
 
 	File vcfs
@@ -461,6 +785,9 @@ workflow scrape_annots {
 
 	String docker
 
+    File? genes_bed
+
+    String genome_build
 
 	## write readme and specify annot: output will be in the same order as input files.... external annot will be matched by first col. id chr:pos:ref:alt
 	## join external annotation already in the extract for speed!!
@@ -489,14 +816,30 @@ workflow scrape_annots {
         annotation_file = add_rsids.rsid_out,
     }
 
+    if (!defined(genes_bed)) {
+        call download_genes {
+            input: docker = docker, 
+            genome_build = genome_build
+        }
+    }
+
+    # Optional types can be coalesced by using the select_first function
+    File genes = select_first([genes_bed, download_genes.genes_out])
+
+    call add_nearest_genes {
+        input: annotation  = add_gnomad.gnomad_joined_out,
+        genes = genes,
+        docker = docker
+    }
+
 	call small {
-		input: annotation = add_gnomad.gnomad_joined_out,
+		input: annotation =  add_nearest_genes.anno_ng_out,
 		docker=docker
 	}
 
 	output {
-		File annotation = add_gnomad.gnomad_joined_out
-		File annotatation_index = add_gnomad.gnomad_joined_out_tbi
+		File annotation = add_nearest_genes.anno_ng_out
+		File annotatation_index = add_nearest_genes.anno_ng_out_tbi
 		File annotation_small = small.small_out
 		File annotation_small_index = small.small_index
 	}
