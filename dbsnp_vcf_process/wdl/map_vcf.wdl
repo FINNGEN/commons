@@ -25,7 +25,7 @@ task vcf_task{
         #rename & resctrict chromosomes
         bcftools view vcf_file.vcf.gz -r ${sep=',' old_chr_names} -Ou| \
         bcftools annotate --rename-chr fasta_compliant_chrom_map -Ou | \
-        bcftools norm -f ${fasta} -c wx  -Ou| \
+        bcftools norm -f ${fasta} -c wx -m- -Ou| \
         bcftools annotate --rename-chr chrtonum -Ov|bgzip -@4 > output.vcf.gz 
         tabix -p vcf output.vcf.gz
     >>>
