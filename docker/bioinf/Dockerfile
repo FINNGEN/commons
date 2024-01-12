@@ -16,7 +16,7 @@ RUN apt-get update && apt-get upgrade --yes
 
 RUN apt-get install vim emacs jq less datamash wget gawk curl lsb-core make gcc g++ g++-9 cmake gfortran libreadline6-dev \
     libz-dev libbz2-dev liblzma-dev zlib1g-dev libpcre2-dev libpcre3-dev libssl-dev libcurl4-openssl-dev \
-    libopenblas-dev default-jre unzip bzip2 libboost-all-dev \
+    libopenblas-dev default-jre unzip bzip2 libboost-all-dev parallel \
     libpng-dev libcairo2-dev python3-pip libxml2-dev --yes
 
 RUN curl -LO https://github.com/samtools/htslib/releases/download/${HTSLIB_VER}/htslib-${HTSLIB_VER}.tar.bz2 && \
