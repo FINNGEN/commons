@@ -2,9 +2,9 @@
 import argparse
 import gzip
 import sys
-import time
-import requests
 
+
+from functools import partial
 
 if sys.version_info[0] != 3 or sys.version_info[1]<7 or (sys.version_info[1]==7 and sys.version_info[2]<2):
     raise Exception(" Python Version >= 3.7.2 required")
@@ -17,31 +17,11 @@ from queue import PriorityQueue
 from io import TextIOBase
 from typing import Tuple, List, OrderedDict, Dict, Iterator
 from scipy.stats import chi2
-import math
+import ld_tools
 
-def get_ld_vars( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, ld_source, retries:int=5) -> Dict[str,str]:
-    snooze=2
-    snooze_multiplier = 2
-    max_snooze=256
 
-    ld_w=max(min(5000000,ld_w), 500000)
-    url = f'http://api.finngen.fi/api/ld?variant={chrom}:{pos}:{ref}:{alt}&panel={ld_source}&window={ld_w}&r2_thresh={r2}'
-    print(f'requesting LD {url}')
-    r = requests.get(url)
-    retries_left = retries
-    while r.status_code!=200 and retries_left>0:
-        retries_left-=1
-        if r.status_code!=200:
-            print("Error requesting ld for url {}. Error code: {}".format(url, r.status_code) ,file=sys.stderr)
-            time.sleep(snooze)
-            snooze = min(snooze * snooze_multiplier, max_snooze)
+import heapq
 
-        r = requests.get(url)
-
-    if r.status_code!=200:
-        raise Exception("LD server response failed for {} attempts".format(retries) )
-
-    return(r.json())
 
 
 class Hit:
@@ -127,16 +107,22 @@ class Cluster(object):
         self.end = -float('inf')
         self.n_hits = 0
         self.removed = {}
-        self.peak_priority = float('inf')
+        #self.peak_priority = float('inf')
 
+
+        self.hits_pos_order = []
+
+
+    @property
+    def peak_priority(self):
+        return self.hits[0]
 
     def add_hit(self, hit:Hit):
 
-        if hit.priority<self.peak_priority:
-            self.peak_priority=hit.priority
-
         self.hit_cache[ hit.varid ].append(hit)
         self.hits.put( (hit.priority, hit) )
+
+         ##= heapq.heappush(self.hits_pos_order,(hit.pos),hit))
 
         if hit.pos > self.end:
             self.end = hit.pos
@@ -145,9 +131,6 @@ class Cluster(object):
             self.start = hit.pos
 
         self.n_hits += 1
-
-
-
 
     @property
     def boundaries(self):
@@ -169,9 +152,9 @@ class Cluster(object):
         for vi in var_ids:
 
             if vi[0] in self.hit_cache:
-
                 eligible_for_chi_prune=True
                 delvar_af=0
+
                 if obs_exp_chi2_thr is not None:
                     ## this option should only be used for single pheno files so only one of each variant can exist.
                     if len(self.hit_cache[vi[0]])>1:
@@ -183,16 +166,23 @@ class Cluster(object):
                         if delvar_af>af_threshold_chi_prune:
                             eligible_for_chi_prune=False
 
-                    chisq = chi2.isf(delvar.priority, df=2)
+                    chisq = chi2.isf(delvar.priority, df=1)
+                
 
-                if vi[1]>r2 or (eligible_for_chi_prune and obs_exp_chi2_thr is not None and (chisq/chisqtop)>=obs_exp_chi2_thr):
+                if (eligible_for_chi_prune and obs_exp_chi2_thr is not None):
+                    r2 = min(1,(obs_exp_chi2_thr/chisqtop))
+
+                ## this if taking into account the target values pval... leaves indep hits all the time in so not using.
+                #r2would = min(1,(chisq/chisqtop))
+                
+                if vi[1]>r2:
                     self.removed[vi[0]]=""
                     rm_hits.extend(self.hit_cache[vi[0]])
                     del self.hit_cache[vi[0]]
 
         self.n_hits-=len(rm_hits)
 
-        return rm_hits
+        return (rm_hits, r2)
 
     def size(self)->int:
         return self.n_hits
@@ -214,6 +204,14 @@ class Cluster(object):
             b = self.hits.get(block=False)[1]
 
         self.n_hits-=1
+
+
+        ###  need to shrink cluster size here so need to know the pos order
+        #if b.pos==self.end:
+        #    self.end = b.pos
+
+        #if b.pos > self.start:
+        #    self.start = b.pos
 
         merged = [ h for h in self.hit_cache[b.varid] if h != b]
 
@@ -243,7 +241,6 @@ class Cluster(object):
         self.n_hits = 0
         self.hit_cache=defaultdict(list)
         self.removed = {}
-        self.peak_priority = float('inf')
 
         #get_ld_vars(chrom, var[1], var[2], var[3], args.ld, args.ld_w)
 
@@ -254,8 +251,9 @@ class Cluster(object):
                 )
 
 
-def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_chisq:float=None,
-                    clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None, fixed_ld_search_width=None) ->List[Tuple[Hit,List[Hit]]]:
+def prune_cluster(cl:Cluster, r2:float, ld_interface,clump_expected_chisq:float=None,
+                    clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None, 
+                    fixed_ld_search_width=None, max_ld_width:int=None) ->List[Tuple[Hit,List[Hit]]]:
     '''
         Takes cluster and prunes by LD of Hits in cluster, retaining the top in in the clustered
         Args:
@@ -264,7 +262,7 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_ch
             n_retry: number of times to retry error in ld server
         Returns: list of tuples where first element is the lead Hit of the cluster and second is list of clustered Hits
     '''
-
+    
     if cl.size()==1:
         print("size 0")
         return [(cl.get_best()[0],[])]
@@ -274,7 +272,6 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_ch
     redhit=0
 
     while not cl.empty():
-
         best = cl.get_best()
         worse_same = best[1]
         top = best[0]
@@ -293,33 +290,43 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_ch
             min_width = 2 * max( abs(pos-range[0]), abs(pos-range[1]) ) + 100
 
         ## ld server is remarkably inexact on the range so add a lot of buffer.
-        safety_buffer=50000
+        safety_buffer=0
+
+        
+        width=cl.width()
 
         if fixed_ld_search_width:
             width=fixed_ld_search_width
         else:
-            width = max(abs(top.pos-cl.boundaries[0]-safety_buffer)*2, abs(top.pos-cl.boundaries[1]+safety_buffer)*2 )
+            width = max(abs(top.pos-cl.boundaries[0]-safety_buffer), abs(top.pos-cl.boundaries[1]+safety_buffer) )
+            
+            if(max_ld_width):
+                if width>max_ld_width:
+                    width=max_ld_width
 
+
+        if width<100000:
+            width=100000
+            
         search_r2=r2
-        chisqtop=chi2.isf(cl.peak_priority, df=1)
+        chisqtop=chi2.isf(top.priority, df=1)
 
         if clump_expected_chisq:
             ## r2 needed for nominal significance
             #search_r2 = 5/chisqtop
-            # we need all ld variants for chisq clumping.
+            # we need all ld variants for chisq clumping as we are later checking if eligible based on target variant AF.
             search_r2=0
-
-        ld = get_ld_vars(top.chrom, top.pos, top.ref, top.alt, search_r2,
-            width, ld_source=ld_source,retries=n_retry )
-
+            
+        ld =ld_interface(top.chrom, top.pos, top.ref, top.alt, search_r2,width)
+        
         varid = ":".join( [top.chrom,str(top.pos),top.ref,top.alt] )
-        ldvars = [ ("chr" + ldv["variation2"].replace(":","_"), float(ldv["r2"])) for ldv in ld["ld"] if ldv["variation2"]!=varid]
+        ldvars = [ ("chr" + ldv["variation2"].replace(":","_"), float(ldv["r2"])) for ldv in ld if ldv["variation2"]!=varid]
 
-        removed = cl.remove_hits( ldvars, r2, chisqtop, clump_expected_chisq, clump_expected_chisq_filter_af_col, af_threshold_chi_prune=af_threshold_chi_prune )
+        (removed,r2_used) = cl.remove_hits( ldvars, r2, chisqtop, clump_expected_chisq, clump_expected_chisq_filter_af_col, af_threshold_chi_prune=af_threshold_chi_prune )
 
-        #print(f"removed {removed}")
         removed.extend(worse_same)
-        print(f'merged: {len(removed)} hits to top. Top: {top.varid}, removed {[ h.varid for h in removed]}')
+
+        print(f'merged: {len(removed)} hits to top using r2 {r2_used}. Top: {top.varid}, removed {[ h.varid for h in removed]}')
         redhit+=1
         outdat.append( (top, removed) )
 
@@ -327,20 +334,27 @@ def prune_cluster(cl:Cluster, r2:float, n_retry:int, ld_source,clump_expected_ch
 
 def write_cluster(pruned:list[tuple[Hit,List[Hit]]], outcols:list[str] ,out:TextIOBase):
     for h in pruned:
-        out.write("\t".join(h[0].data) + "\t" + ",".join([ ";".join([pr[c] for c in outcols]) for pr in h[1] ]) + "\n")
+        out.write("\t".join(h[0].data) + "\t" + ",".join([ ";".join([str(pr[c]) for c in outcols]) for pr in h[1] ]) + "\n")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', action='store', type=str, help='')
     parser.add_argument('outfile', action='store', type=str, help='')
     parser.add_argument('-pcol', default="lead_pval", help="Priority columns, smaller is more important. Data needs to be convertable to float")
-    parser.add_argument('-ld_source', default="sisu4")
+    parser.add_argument('-ld_source', default="sisu42")
+
+
+    parser.add_argument('-local_tomahawk_LD', action='store_true', help=' Tomahawk must be locally installed and FinnGen produced tomhawk LD  and variant mapping must be available. See: https://github.com/FINNGEN/ld_server for generating')
+    parser.add_argument('-local_tomahawk_threads', type=int)
+
     parser.add_argument('-chromcol', default="chrom")
     parser.add_argument('-poscol', default="pos")
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
     parser.add_argument('-n_retries_ld', type=int, default=5)
-    parser.add_argument('-ld', type=float, default=0.5)
+    parser.add_argument('-ld', type=float, default=0.2)
+
+    parser.add_argument('-max_ld_width',type=int, help="restrict max lad width search to this.",)
     parser.add_argument('-fixed_ld_search_width', type=int, help="Don't try to optimize the search width based on cluster min/max bp position but use fixed width. LD server can be very innacurate in width")
     parser.add_argument('-clump_expected_chisq', type=float,
         help="Use only for single phenotype file pruning hits caused by residual LD from stronger signal !!! Clumps variants if based on LD the observed variant chisq is this much attributable to excepted LD from stronger hit.")
@@ -350,7 +364,19 @@ if __name__ == '__main__':
     parser.add_argument('-prune_column_list', default="phenocode", help="Comma separated list of column names that will be printed out in the last column where pruned endpoints are listed")
     parser.add_argument('-min_region', help="column with chr:start-stop of minimum region to include in ld search for each hit ")
 
-    args = parser.parse_args()
+
+    ld_interface = None
+
+    main_args, _ = parser.parse_known_args()
+    if main_args.local_tomahawk_LD:
+        parser.add_argument("-tomahawk_template", type=str, required=main_args.local_tomahawk_LD, help="Template to tomahawk files where chromosome number is replaced with {CHR}")
+        parser.add_argument("-tomahawk_mapfile", type=str, required=main_args.local_tomahawk_LD, help="Path to location map file")
+        args = parser.parse_args()
+        ld_interface = partial(ld_tools.get_ld_vars_tomahawk, tomafile=args.tomahawk_template, mapfile=args.tomahawk_mapfile, tomahawk_threads=args.local_tomahawk_threads)
+    else:
+        args = parser.parse_args()
+        ld_interface = partial(ld_tools.get_ld_vars_api, ld_source=args.ld_source, retries=args.n_retries_ld)
+    
     of = gzip.open if args.file.endswith(".gz") else open
 
     with of(args.file, 'rt') as infile:
@@ -368,7 +394,7 @@ if __name__ == '__main__':
 
         missing = [r for r in reqs if not r in h]
         if len(missing)>0:
-            raise Exception(f"Given columns {missing} not in file ")
+            raise Exception(f"Given columns {missing} not in file observed headers {h}")
 
         seen_chroms = {}
         progress_rep=100
@@ -395,10 +421,12 @@ if __name__ == '__main__':
                 seen_chroms[hit.chrom] = 1
 
                 if hit.chrom != last_hit.chrom or hit.pos-last_hit.pos > args.ld_w:
-                    print("#### starting prune cluster")
-                    pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld,ld_source=args.ld_source,
+                    print(f'#### starting prune cluster  {cluster}')
+                
+                    pruned = prune_cluster(cluster, args.ld,ld_interface=ld_interface,
                         clump_expected_chisq=args.clump_expected_chisq, clump_expected_chisq_filter_af_col=args.clump_expected_chisq_filter_af_col,
-                        af_threshold_chi_prune=args.clump_expected_chisq_af, fixed_ld_search_width=args.fixed_ld_search_width)
+                        af_threshold_chi_prune=args.clump_expected_chisq_af, 
+                        fixed_ld_search_width=args.fixed_ld_search_width, max_ld_width=args.max_ld_width)
                     print(f'#### Cluster pruned to {len(pruned)} hits')
                     write_cluster(pruned,pruned_cols, out)
                     cluster.clear()
@@ -413,9 +441,10 @@ if __name__ == '__main__':
             if cluster.size()>0:
                 # write last cluster not pruned yet
                 print(f"#### starting prune cluster {cluster}")
-                pruned = prune_cluster(cluster, args.ld, n_retry=args.n_retries_ld,ld_source=args.ld_source,
+                pruned = prune_cluster(cluster, args.ld,ld_interface=ld_interface ,
                     clump_expected_chisq=args.clump_expected_chisq, clump_expected_chisq_filter_af_col=args.clump_expected_chisq_filter_af_col,
-                    af_threshold_chi_prune=args.clump_expected_chisq_af, fixed_ld_search_width=args.fixed_ld_search_width)
+                    af_threshold_chi_prune=args.clump_expected_chisq_af, fixed_ld_search_width=args.fixed_ld_search_width, 
+                    max_ld_width=args.max_ld_width)
 
                 print(f'#### Cluster pruned to {len(pruned)} hits')
                 write_cluster(pruned,pruned_cols, out)
