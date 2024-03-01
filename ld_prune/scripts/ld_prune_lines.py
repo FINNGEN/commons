@@ -4,7 +4,7 @@ import gzip
 import sys
 
 
-from functools import partial
+
 
 if sys.version_info[0] != 3 or sys.version_info[1]<7 or (sys.version_info[1]==7 and sys.version_info[2]<2):
     raise Exception(" Python Version >= 3.7.2 required")
@@ -341,44 +341,21 @@ if __name__ == '__main__':
     parser.add_argument('file', action='store', type=str, help='')
     parser.add_argument('outfile', action='store', type=str, help='')
     parser.add_argument('-pcol', default="lead_pval", help="Priority columns, smaller is more important. Data needs to be convertable to float")
-    parser.add_argument('-ld_source', default="sisu42")
-
-
-    parser.add_argument('-local_tomahawk_LD', action='store_true', help=' Tomahawk must be locally installed and FinnGen produced tomhawk LD  and variant mapping must be available. See: https://github.com/FINNGEN/ld_server for generating')
-    parser.add_argument('-local_tomahawk_threads', type=int)
 
     parser.add_argument('-chromcol', default="chrom")
     parser.add_argument('-poscol', default="pos")
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
-    parser.add_argument('-n_retries_ld', type=int, default=5)
-    parser.add_argument('-ld', type=float, default=0.2)
-
-    parser.add_argument('-max_ld_width',type=int, help="restrict max lad width search to this.",)
-    parser.add_argument('-fixed_ld_search_width', type=int, help="Don't try to optimize the search width based on cluster min/max bp position but use fixed width. LD server can be very innacurate in width")
-    parser.add_argument('-clump_expected_chisq', type=float,
-        help="Use only for single phenotype file pruning hits caused by residual LD from stronger signal !!! Clumps variants if based on LD the observed variant chisq is this much attributable to excepted LD from stronger hit.")
-    parser.add_argument('-clump_expected_chisq_af', type=float, default=0.01,help="AF limit where rarer than this variants are subject to clump_expected_chisq")
-    parser.add_argument('-clump_expected_chisq_filter_af_col', type=str, help="AF column if clump_expected_chisq applies only to low freq variants ")
-    parser.add_argument('-ld_w', default=500000, type=int, help='How close hits are first clustered together for LD based pruning. Cluster region can become larger as this is between adjacent hits.')
-    parser.add_argument('-prune_column_list', default="phenocode", help="Comma separated list of column names that will be printed out in the last column where pruned endpoints are listed")
-    parser.add_argument('-min_region', help="column with chr:start-stop of minimum region to include in ld search for each hit ")
-
-
-    ld_interface = None
-
-    main_args, _ = parser.parse_known_args()
-    if main_args.local_tomahawk_LD:
-        parser.add_argument("-tomahawk_template", type=str, required=main_args.local_tomahawk_LD, help="Template to tomahawk files where chromosome number is replaced with {CHR}")
-        parser.add_argument("-tomahawk_mapfile", type=str, required=main_args.local_tomahawk_LD, help="Path to location map file")
-        args = parser.parse_args()
-        ld_interface = partial(ld_tools.get_ld_vars_tomahawk, tomafile=args.tomahawk_template, mapfile=args.tomahawk_mapfile, tomahawk_threads=args.local_tomahawk_threads)
-    else:
-        args = parser.parse_args()
-        ld_interface = partial(ld_tools.get_ld_vars_api, ld_source=args.ld_source, retries=args.n_retries_ld)
     
-    of = gzip.open if args.file.endswith(".gz") else open
+    
+    parser.add_argument('-prune_column_list', default="phenocode", help="Comma separated list of column names that will be printed out in the last column where pruned endpoints are listed")
+    ## 
+    
+    parser = ld_tools.get_common_LD_API_arg_parser(parser)
+    args = parser.parse_args()
+    ld_interface = ld_tools.get_ld_api_by_cmdargs(args)
 
+    of = gzip.open if args.file.endswith(".gz") else open
     with of(args.file, 'rt') as infile:
 
         h = OrderedDict([ (hd,i) for i,hd in enumerate(infile.readline().strip().split("\t")) ])

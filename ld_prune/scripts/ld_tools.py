@@ -5,7 +5,10 @@ import requests
 
 import tempfile
 from typing import Dict
+from collections.abc import Callable
 from abc import abstractmethod
+from functools import partial
+import argparse
 
 LD_DISPL_DECIMALS = 3
 
@@ -135,6 +138,50 @@ def get_ld_vars_api( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, l
 
 
 
+def get_common_LD_API_arg_parser(parser:argparse.ArgumentParser):
+    '''
+        Adds common arguments for LD API to the given parser
+    '''
+
+    parser.add_argument('-ld', type=float, default=0.2)
+    parser.add_argument('-ld_source', default="sisu42")
+    parser.add_argument('-local_tomahawk_LD', action='store_true', help=' Tomahawk must be locally installed and FinnGen produced tomhawk LD  and variant mapping must be available. See: https://github.com/FINNGEN/ld_server for generating')
+    parser.add_argument('-local_tomahawk_threads', type=int)
+    parser.add_argument('-max_ld_width',type=int, help="restrict max lad width search to this.",)
+    parser.add_argument('-fixed_ld_search_width', type=int, help="Don't try to optimize the search width based on cluster min/max bp position but use fixed width. LD server can be very innacurate in width")
+    parser.add_argument('-clump_expected_chisq', type=float,
+        help="Use only for single phenotype file pruning hits caused by residual LD from stronger signal !!! Clumps variants if based on LD the observed variant chisq is this much attributable to excepted LD from stronger hit.")
+    parser.add_argument('-clump_expected_chisq_af', type=float, default=0.01,help="AF limit where rarer than this variants are subject to clump_expected_chisq")
+    parser.add_argument('-clump_expected_chisq_filter_af_col', type=str, help="AF column if clump_expected_chisq applies only to low freq variants ")
+    parser.add_argument('-ld_w', default=500000, type=int, help='How close hits are first clustered together for LD based pruning. Cluster region can become larger as this is between adjacent hits.')
+    parser.add_argument('-min_region', help="column with chr:start-stop of minimum region to include in ld search for each hit ")
+    parser.add_argument('-n_retries_ld', type=int, default=5)
+    
+    main_args, _ = parser.parse_known_args()
+    if main_args.local_tomahawk_LD:
+        parser.add_argument("-tomahawk_template", type=str, required=main_args.local_tomahawk_LD, help="Template to tomahawk files where chromosome number is replaced with {CHR}")
+        parser.add_argument("-tomahawk_mapfile", type=str, required=main_args.local_tomahawk_LD, help="Path to location map file")
+        args = parser.parse_args()
+       
+    else:
+        args = parser.parse_args()
+        
+
+    return parser
+
+
+def get_ld_api_by_cmdargs(args) -> Callable[[str, int, str, str, float, int], Dict[str,str]]:
+    '''
+        Returns a function that can be used to get LD data based on the given command line arguments.
+        Function implements the signature of get_ld_vars
+    '''
+
+    if args.local_tomahawk_LD:
+        ld_interface = partial(get_ld_vars_tomahawk, tomafile=args.tomahawk_template, mapfile=args.tomahawk_mapfile, tomahawk_threads=args.local_tomahawk_threads)
+    else:
+        ld_interface = partial(get_ld_vars_api, ld_source=args.ld_source, retries=args.n_retries_ld)
+    
+    return ld_interface
 
 
 
