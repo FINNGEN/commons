@@ -4,7 +4,11 @@ import argparse
 import ld_tools
 import gzip
 from collections import OrderedDict
-from multiprocessing import Pool
+
+from multiprocessing import Process
+import concurrent.futures
+
+from typing import Callable
 
 CODING_CONSEQUENCES = ["transcript_ablation",
     "splice_donor_variant",
@@ -47,6 +51,39 @@ def read_variant_annot(variant_annot:str, consequence_col:str, other_annot:list[
             res[cpra] = {hd:s[i] for i,hd in enumerate(h)}
     return res 
 
+def get_coding_in_ld(ld_interface:Callable[[str,str,str,str,float,int],list[list]], chrom, pos, ref, alt, 
+                     r2:float, ld_source:str, annots:dict[str,dict[str,str]],
+                     consequence_col:str, other_annot:list[str],):
+    """
+    Returns the coding consequences of the variants in LD with the given cpra
+    """
+    ld = ld_interface(chrom, pos, ref, alt, r2=args.ld, ld_w=args.ld_w)
+
+    variants_in_ld = []
+    cpra = ":".join([chrom,pos,ref,alt])
+    print("checking", cpra, "for coding consequence.")
+    if cpra in annots and annots[cpra][consequence_col] in CODING_CONSEQUENCES:
+        print("adding", cpra, "to list of variants in LD.")
+        cons = annots[cpra][consequence_col] 
+        other_annot_vals = [annots[cpra][oa] for oa in other_annot]
+        dat = [cpra,cons, "1.0"]
+        dat.extend(other_annot_vals)
+        variants_in_ld.append(dat)
+
+    for ldvar in ld:
+        var = ldvar["variation2"]
+        
+        r2= ldvar["r2"]
+        if r2 >= args.ld and var in annots and annots[var][consequence_col] in CODING_CONSEQUENCES:
+            print("adding", var, "to list of variants in LD.")
+            cons = annots[var][consequence_col] 
+            other_annot_vals = [annots[var][oa] for oa in other_annot]
+
+            dat = [var,cons, str(r2)]
+            dat.extend(other_annot_vals)
+            variants_in_ld.append(dat)
+    return variants_in_ld
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', action='store', type=str, help='')
@@ -60,6 +97,8 @@ if __name__ == '__main__':
     parser.add_argument('-poscol', default="pos")
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
+
+    parser.add_argument('-parallel_procs', type=int, default=1, help='Number of parallel processes to use for querying LD')
     ## 
     
     parser = ld_tools.get_common_LD_API_arg_parser(parser)
@@ -81,41 +120,30 @@ if __name__ == '__main__':
             
             out.write("\t".join( list(h.keys())+ ["functional_variants_in_ld"] ) + "\n") 
 
-            for line in infile:
-                s = line.strip("\n").split("\t")
-                chrom = s[h[args.chromcol]]
-                pos = s[h[args.poscol]]
-                ref = s[h[args.refcol]]
-                alt = s[h[args.altcol]]
-                cpra = ":".join([chrom,pos,ref,alt])
+            future_to_line ={}
+            with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel_procs) as executor:
+                for line in infile:
+                    s = line.strip("\n").split("\t")
+                    chrom = s[h[args.chromcol]]
+                    pos = s[h[args.poscol]]
+                    ref = s[h[args.refcol]]
+                    alt = s[h[args.altcol]]
 
-                ld = ld_interface(chrom, pos, ref, alt, r2=args.ld, ld_w=args.ld_w)
 
-                variants_in_ld = []
-                
-                print("checking", cpra, "for coding consequence.")
-                if cpra in annots and annots[cpra][args.consequence_col] in CODING_CONSEQUENCES:
-                    print("adding", cpra, "to list of variants in LD.")
-                    cons = annots[cpra][args.consequence_col] 
-                    other_annot_vals = [annots[cpra][oa] for oa in other_annot]
-                    dat = [cpra,cons, "1.0"]
-                    dat.extend(other_annot_vals)
-                    variants_in_ld.append(dat)
-            
-                for ldvar in ld:
-                    var = ldvar["variation2"]
-                    
-                    r2= ldvar["r2"]
-                    if r2 >= args.ld and var in annots and annots[var][args.consequence_col] in CODING_CONSEQUENCES:
-                        cons = annots[var][args.consequence_col] 
-                        other_annot_vals = [annots[var][oa] for oa in other_annot]
+                    #variants_in_ld = get_coding_in_ld(ld_interface, cpra, args.ld, args.ld_source, annots)
+                    # Start the load operations and mark each future with its line
+                    future_to_line[executor.submit(get_coding_in_ld,ld_interface, chrom, pos,ref,alt, 
+                                                   args.ld, args.ld_source, annots, args.consequence_col, other_annot)]=s
 
-                        dat = [var,cons, str(r2)]
-                        dat.extend(other_annot_vals)
-                        variants_in_ld.append(dat)
-                funcstring =  ";".join([ ",".join(v) for v in variants_in_ld]) 
-                out.write("\t".join(s) + "\t" + funcstring + "\n")        
+                for future in concurrent.futures.as_completed(future_to_line):
+                        s = future_to_line[future]
+                        try:
+                            variants_in_ld = future.result()
+                        except Exception as exc:
+                            print('generated an exception: %s' % exc)
+                        else:    
+                            funcstring =  ";".join([ ",".join(v) for v in variants_in_ld]) 
+                            out.write("\t".join(s) + "\t" + funcstring + "\n")        
 
             
 
-                
