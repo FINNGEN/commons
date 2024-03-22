@@ -45,12 +45,12 @@ task join_annot {
 			vep_varcol=$(zcat ${external_annot} |head -n1|awk -v value="variant" -F "\t" -f headercheck.awk)
 			vep_conscol=$(zcat ${external_annot}|head -n1|awk -v value="most_severe" -F "\t" -f headercheck.awk )
 			vep_genecol=$(zcat ${external_annot}|head -n1|awk -v value="gene_most_severe" -F "\t" -f headercheck.awk)
-			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -V -k 1,1)|bgzip > sorted_vep.gz
+			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -k 1b,1)|bgzip > sorted_vep.gz
 			#sort annotation
 			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants_1.gz
-			cat <(zcat annotated_variants_1.gz|head -n1)  <(zcat annotated_variants_1.gz|tail -n+2|sort -V -k 1,1 -T ./) |bgzip  > sorted_annotated.gz
+			cat <(zcat annotated_variants_1.gz|head -n1)  <(zcat annotated_variants_1.gz|tail -n+2|sort  -k 1b,1 -T ./) |bgzip  > sorted_annotated.gz
 			#join
-			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz) |bgzip  > annotated_variants.gz
+			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz)|sort -V -k1,1 -T ./ |bgzip  > annotated_variants.gz
 		fi
 
 		tabix -b 3 -e 3 -s 2 annotated_variants.gz
