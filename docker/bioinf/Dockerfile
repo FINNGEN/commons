@@ -6,8 +6,8 @@ LABEL maintainer="jkarjala@broadinstitute.org"
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-ARG HTSLIB_VER=1.16
-ARG BCFTOOLS_VER=1.16
+ARG HTSLIB_VER=1.20
+ARG BCFTOOLS_VER=1.20
 ARG R_VER=4.2.2
 
 WORKDIR /tmp
@@ -47,6 +47,12 @@ RUN curl -O http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver && ch
     curl -O http://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz && \
     curl -O http://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz && \
     mkdir /liftover && mv *.chain.gz /liftover/
+
+RUN wget http://www.christianbenner.com/ldstore_v2.0_x86_64.tgz && \
+    tar xzf ldstore_v2.0_x86_64.tgz && \
+    cp ldstore_v2.0_x86_64/ldstore_v2.0_x86_64 /usr/local/bin/ && \
+    chmod a+x /usr/local/bin/ldstore_v2.0_x86_64 && \
+    rm -rf ldstore_v2.0_x86_64*
 
 ENV CLOUDSDK_INSTALL_DIR /usr/local/gcloud/
 RUN curl -sSL https://sdk.cloud.google.com | bash
