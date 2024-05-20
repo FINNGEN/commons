@@ -1,0 +1,11 @@
+{
+    "scrape_annots.vcfs": "gs://r12-data/R12_imputed_genotypes_v3",
+    "scrape_annots.external_annot": "gs://finngen-imputation-panel/sisu4.2/fixed_PAR_X/sisu4.2_annot_annot_w_fixed_PAR_X.tsv.bgz",
+    "scrape_annots.add_rsids.ref_file": "gs://finngen_commons/dbsnp/dbsnp-b156-GRC38.13.left_aligned.vcf.gz",
+    "scrape_annots.small.wanted_columns": "#variant chr pos ref alt INFO AF AC_Het AC_Hom most_severe gene_most_severe rsid EXOME_enrichment_nfe GENOME_enrichment_nfe",
+    "scrape_annots.add_gnomad.gnomad_genomes":"gs://finngen-commons/gnomad/gnomad4/gnomad.genomes.v4.1.sites.merged.tsv.gz",
+    "scrape_annots.add_gnomad.gnomad_exomes":"gs://finngen-commons/gnomad/gnomad4/gnomad.exomes.v4.1.sites.merged.tsv.gz",
+    "scrape_annots.add_gnomad.genome_cols":["enrichment_nfe","AF_fin","AF_nfe","AC_fin","AC_nfe","AN_fin","AN_nfe"],
+    "scrape_annots.add_gnomad.exome_cols":["enrichment_nfe","AF_fin","AF_nfe","AC_fin","AC_nfe","AN_fin","AN_nfe"],
+    "scrape_annots.docker": "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8.2"
+}
