@@ -37,7 +37,7 @@ task join_annot {
 
 		#if there are no external annots, then just simply concat files
 		if [[ -z "${external_annot}" ]]; then
-			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants.gz
+			awk 'BEGIN{FS=OFS="\t"} NR==1 { for(i=1;i<=NF;i++) sub(/_chr1$/, "", $i); print } FNR>1' ${sep=" " files} | bgzip > annotated_variants.gz
 		else
 			#else sort VEP and annotation files in similar order, then join
 			
@@ -47,7 +47,7 @@ task join_annot {
 			vep_genecol=$(zcat ${external_annot}|head -n1|awk -v value="gene_most_severe" -F "\t" -f headercheck.awk)
 			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -k 1b,1)|bgzip > sorted_vep.gz
 			#sort annotation
-			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants_1.gz
+			awk 'BEGIN{FS=OFS="\t"} NR==1 { for(i=1;i<=NF;i++) sub(/_chr1$/, "", $i); print } FNR>1' ${sep=" " files} | bgzip > annotated_variants_1.gz
 			cat <(zcat annotated_variants_1.gz|head -n1)  <(zcat annotated_variants_1.gz|tail -n+2|sort  -k 1b,1 -T ./) |bgzip  > sorted_annotated.gz
 			#join
 			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz)|sort -V -k1,1 -T ./ |bgzip  > annotated_variants.gz
