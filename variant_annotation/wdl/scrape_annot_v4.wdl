@@ -58,6 +58,8 @@ task join_annot {
 			zcat annotated_variants.gz.tmp | body sort -V -k 1,1 -T ./ | bgzip  > sorted_annotated.gz
 			#join
 			join --nocheck-order -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz) | bgzip > annotated_variants.gz
+        else
+            mv annotated_variants.gz.tmp annotated_variants.gz
 		fi
 
 		tabix -b 3 -e 3 -s 2 annotated_variants.gz
