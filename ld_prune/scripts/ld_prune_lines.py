@@ -4,24 +4,19 @@ import gzip
 import sys
 
 
-
-
 if sys.version_info[0] != 3 or sys.version_info[1]<7 or (sys.version_info[1]==7 and sys.version_info[2]<2):
     raise Exception(" Python Version >= 3.7.2 required")
 
-from functools import partial
-from collections import namedtuple
 from collections import defaultdict
 from collections import OrderedDict
 from queue import PriorityQueue
 from io import TextIOBase
-from typing import Tuple, List, OrderedDict, Dict, Iterator
+from typing import Tuple, List, OrderedDict, Iterator
 from scipy.stats import chi2
 import ld_tools
+    import subprocess
 
-
-import heapq
-
+import math
 
 
 class Hit:
@@ -149,10 +144,11 @@ class Cluster(object):
             chisqtop: strongest variant chisq in the cluster
         """
         rm_hits = []
-        for vi in var_ids:
 
+        
+        r2 = min(1,(obs_exp_chi2_thr/chisqtop)) if obs_exp_chi2_thr is not None else r2
+        for vi in var_ids:
             if vi[0] in self.hit_cache:
-                eligible_for_chi_prune=True
                 delvar_af=0
 
                 if obs_exp_chi2_thr is not None:
@@ -164,24 +160,16 @@ class Cluster(object):
                     if clump_expected_chisq_filter_af_col is not None:
                         delvar_af=float(delvar[clump_expected_chisq_filter_af_col])
                         if delvar_af>af_threshold_chi_prune:
-                            eligible_for_chi_prune=False
-
-                    chisq = chi2.isf(delvar.priority, df=1)
-                
-
-                if (eligible_for_chi_prune and obs_exp_chi2_thr is not None):
-                    r2 = min(1,(obs_exp_chi2_thr/chisqtop))
-
+                            continue
+                    #chisq = chi2.isf(delvar.priority, df=1)
                 ## this if taking into account the target values pval... leaves indep hits all the time in so not using.
                 #r2would = min(1,(chisq/chisqtop))
-                
                 if vi[1]>r2:
                     self.removed[vi[0]]=""
                     rm_hits.extend(self.hit_cache[vi[0]])
                     del self.hit_cache[vi[0]]
 
         self.n_hits-=len(rm_hits)
-
         return (rm_hits, r2)
 
     def size(self)->int:
@@ -284,11 +272,6 @@ def prune_cluster(cl:Cluster, r2:float, ld_interface,clump_expected_chisq:float=
             worse_same.extend([ h for h in cl.get_all() ])
             outdat.append( (top, worse_same ))
             return outdat
-
-        if args.min_region:
-            range = hit[arg.min_region].split(":").split("-")
-            min_width = 2 * max( abs(pos-range[0]), abs(pos-range[1]) ) + 100
-
         ## ld server is remarkably inexact on the range so add a lot of buffer.
         safety_buffer=0
 
@@ -310,6 +293,8 @@ def prune_cluster(cl:Cluster, r2:float, ld_interface,clump_expected_chisq:float=
             
         search_r2=r2
         chisqtop=chi2.isf(top.priority, df=1)
+        if math.isinf(chisqtop):
+         chisqtop=chi2.isf(sys.float_info.min, df=1)
 
         if clump_expected_chisq:
             ## r2 needed for nominal significance
@@ -321,7 +306,7 @@ def prune_cluster(cl:Cluster, r2:float, ld_interface,clump_expected_chisq:float=
         
         varid = ":".join( [top.chrom,str(top.pos),top.ref,top.alt] )
         ldvars = [ ("chr" + ldv["variation2"].replace(":","_"), float(ldv["r2"])) for ldv in ld if ldv["variation2"]!=varid]
-
+        
         (removed,r2_used) = cl.remove_hits( ldvars, r2, chisqtop, clump_expected_chisq, clump_expected_chisq_filter_af_col, af_threshold_chi_prune=af_threshold_chi_prune )
 
         removed.extend(worse_same)
@@ -336,6 +321,16 @@ def write_cluster(pruned:list[tuple[Hit,List[Hit]]], outcols:list[str] ,out:Text
     for h in pruned:
         out.write("\t".join(h[0].data) + "\t" + ",".join([ ";".join([str(pr[c]) for c in outcols]) for pr in h[1] ]) + "\n")
 
+def get_chr_pos_col_idx(file:str, chrom:str, pos:str) -> Tuple[int,int]:
+    with of(args.file, 'rt') as infile:
+
+        h = OrderedDict([ (hd,i) for i,hd in enumerate(infile.readline().strip().split("\t")) ])
+
+        if chrom not in h or pos not in h:
+            raise Exception(f"Given columns {chrom} and {pos} not in file observed headers {h}")
+        
+    return (h[chrom], h[pos])
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('file', action='store', type=str, help='')
@@ -346,16 +341,24 @@ if __name__ == '__main__':
     parser.add_argument('-poscol', default="pos")
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
-    
-    
     parser.add_argument('-prune_column_list', default="phenocode", help="Comma separated list of column names that will be printed out in the last column where pruned endpoints are listed")
+
+    parser.add_argument('-sort_first', action='store_true', help="Sort input file by chrom and pos before running")
     ## 
     
     parser = ld_tools.get_common_LD_API_arg_parser(parser)
     args = parser.parse_args()
     ld_interface = ld_tools.get_ld_api_by_cmdargs(args)
 
+
     of = gzip.open if args.file.endswith(".gz") else open
+    if args.sort_first:
+            (chr_idx, pos_idx) = get_chr_pos_col_idx(args.file, args.chromcol, args.poscol)
+            cmd = f'''cat <(head -n 1  {args.file}) <(tail -n +2  {args.file} | sort -t $\'\t\' -k {chr_idx+1},{chr_idx+1}g -k {pos_idx+1},{pos_idx+1}g)  > {args.file}.sorted'''
+            print(f"Sorting file by chrom and pos using command: {cmd}" )
+            subprocess.run(cmd, shell=True, check=True, executable='/bin/bash')
+            args.file = args.file + ".sorted"
+
     with of(args.file, 'rt') as infile:
 
         h = OrderedDict([ (hd,i) for i,hd in enumerate(infile.readline().strip().split("\t")) ])
@@ -375,7 +378,7 @@ if __name__ == '__main__':
 
         seen_chroms = {}
         progress_rep=100
-
+        
         with open(args.outfile,"wt") as out:
             out.write("\t".join( list(h.keys())+ ["ld_pruned_phenos"] ) + "\n")
             n_vars=0

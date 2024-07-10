@@ -1,2 +1,3 @@
 requests
 scipy
+pysam

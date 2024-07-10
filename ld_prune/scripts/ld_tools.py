@@ -3,6 +3,7 @@ import imp, logging, subprocess, shlex, re, sys, time, gzip, pysam, threading
 from subprocess import CalledProcessError
 import requests
 
+import os
 import tempfile
 from typing import Dict
 from collections.abc import Callable
@@ -48,12 +49,17 @@ def parse_ld(data:str, cpra:str, r2_thresh:float, twk2cpra:list[Dict[str,str]], 
     res = []
     used = {}
     for line in data_iter:
+        if line=="":
+            continue
+
         s = line.strip().split('\t')
         if float(s[hdr['R2']]) < r2_thresh:
             continue
         
         var1 = s[hdr['ridA']] + ':' + s[hdr['posA']]
         var2 = s[hdr['ridB']] + ':' + s[hdr['posB']]
+
+
         if var1 not in twk2cpra:
             print(var1 + ' tomahawk position not in given mapping (query variant ' + cpra + '), this is an issue only if the position is not at the boundary of the window. Ignoring position', file=sys.stderr)
         elif var2 not in twk2cpra:
@@ -76,7 +82,7 @@ def get_ld_vars(chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int) -> Dic
     pass
 
 def get_ld_vars_tomahawk(chrom, pos, ref, alt, r2:float, ld_w:int,tomafile:str, mapfile:str,
-                         tomahawk_threads=None, limit_to_vars:dict[str,str]=None) -> Dict[str,str]:
+                         tomahawk_threads=None ,limit_to_vars:dict[str,str]=None) -> Dict[str,str]:
 
     if(chrom.startswith("chr")):
         chrom = chrom.replace("chr","")
@@ -97,17 +103,26 @@ def get_ld_vars_tomahawk(chrom, pos, ref, alt, r2:float, ld_w:int,tomafile:str, 
     if tomahawk_threads:
         opts = " -t " + str(tomahawk_threads)
 
+    out =tf.file.name
+    print(f'tomahawk scalc {opts} -i {tomafile} -o {out} -I {tomahawk_chrpos[0]}:{int(tomahawk_chrpos[1])-1}-{tomahawk_chrpos[1]} -w {searchwidth}', file=sys.stderr )
+    cmd_scalc = 'tomahawk scalc ' + opts + ' -i ' + tomafile + ' -o ' + out + ' -I ' + tomahawk_chrpos[0] + ':' + str(int(tomahawk_chrpos[1])-1) + '-' + tomahawk_chrpos[1] + ' -w ' + searchwidth
 
-    cmd_scalc = 'tomahawk scalc ' + opts + ' -i ' + tomafile + ' -o ' +  tf.file.name + ' -I ' + tomahawk_chrpos[0] + ':' + str(int(tomahawk_chrpos[1])-1) + '-' + tomahawk_chrpos[1] + ' -w ' + searchwidth
-    out = subprocess.check_output(shlex.split(cmd_scalc)).decode(sys.stdout.encoding).strip()
-    cmd_view = 'tomahawk view -i ' + tf.file.name
-    try:
-        out = subprocess.check_output(shlex.split(cmd_view)).decode(sys.stdout.encoding).strip()
-    except:
-        print("ERROR viewing results." + out, file=sys.stderr )
+    pr = subprocess.run(
+                shlex.split(cmd_scalc),
+                stdout=subprocess.PIPE,
+                encoding="ascii",
+            )
+      
+    if pr.returncode!=0:
+        raise Exception(f'Error running tomahawk scalc: {pr.stderr} {pr.stdout}')
+    cmd_view = 'tomahawk view -i ' + out
+    pr = subprocess.run(shlex.split(cmd_view), stderr=subprocess.PIPE, 
+                             stdout=subprocess.PIPE, encoding="ascii")
+    if pr.returncode!=0:
+        raise Exception(f'Error running tomahawk view: {pr.stderr} {pr.stdout}')
 
     cpra = "{}:{}:{}:{}".format(chrom, pos, ref, alt)
-    return parse_ld(out, cpra, r2, map[1])
+    return parse_ld(pr.stdout, cpra, r2, map[1])
 
 
 def get_ld_vars_api( chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int, ld_source,
@@ -177,7 +192,10 @@ def get_ld_api_by_cmdargs(args) -> Callable[[str, int, str, str, float, int], Di
     '''
 
     if args.local_tomahawk_LD:
-        ld_interface = partial(get_ld_vars_tomahawk, tomafile=args.tomahawk_template, mapfile=args.tomahawk_mapfile, tomahawk_threads=args.local_tomahawk_threads)
+        if not os.path.exists(args.tomahawk_mapfile):
+            raise Exception("tomahawk map file not found")
+        ld_interface = partial(get_ld_vars_tomahawk, tomafile=args.tomahawk_template, mapfile=args.tomahawk_mapfile, 
+                               tomahawk_threads=args.local_tomahawk_threads)
     else:
         ld_interface = partial(get_ld_vars_api, ld_source=args.ld_source, retries=args.n_retries_ld)
     
