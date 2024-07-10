@@ -1,0 +1,8 @@
+{
+    "long_range_prune.fmapfile": "gs://r12-data/mitja/ld_prune/all_autoreport_r12.tsv",
+    "long_range_prune.tomahawk_pattern": "gs://finngen-imputation-panel/sisu4.2/tomahawk/v4.2.chr{CHR}_phased_SNPID.twk",
+    "long_range_prune.path_to_tw_map": "gs://finngen-imputation-panel/sisu4.2/tomahawk/sisu4.2_twk_mapping.tsv.gz",
+    "long_range_prune.ld_prune.ld_width": 20000000,
+    "long_range_prune.ld_prune.clump_expected_chisq": 5,
+    "long_range_prune.ld_prune.clump_expected_chisq_af": 1.0
+}
