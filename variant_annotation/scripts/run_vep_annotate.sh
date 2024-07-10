@@ -10,15 +10,15 @@ project="finngen-refinery-dev"
 network="projects/$project/regions/$region/subnetworks/default"
 
 ## can add more workers for full genomes. VEP is slow.
-workers=2
+workers=3
 
 ## ## start hail cluster with vep options.
 ## requestes pays needed to read vep config file from hail buckets.
 hailctl dataproc start $clustername --vep $build --region $region --requester-pays-allow-all --num-workers $workers --max-idle 30m --subnet $network --zone $zone
 
 # note that double wildcards ** dont work here
-vcf_in="gs://finngen-imputation-panel/sisu4/vcf/snpid/*.vcf.gz"
-out_prefix="gs://finngen-imputation-panel/sisu4/hail/sisu4_annot"
+vcf_in="gs://r12-data/exome/renamed_final/vcf/*.gz"
+out_prefix="gs://r12-data/exome/renamed_final/sites_only_annotated"
 #chip:
 #vcf_in="gs://r9-data/chip/vcf/r9_axiom_chip_chr*_subset.vcf.gz"
 #out_prefix="gs://r9-data/chip/anno/r9_chip_vep_annot_update"
@@ -32,4 +32,5 @@ out_prefix="gs://finngen-imputation-panel/sisu4/hail/sisu4_annot"
 #
 hailctl dataproc submit $clustername --region $region --pyfiles $(dirname -- "$0")/hail_functions.py \
 	$(dirname -- "$0")/vep_annotate.py $vcf_in $out_prefix --overwrite \
-	--vep_conf gs://r9-data/vep95-GRCh38-loftee-gcloud.json
+	--vep_conf gs://r9-data/vep95-GRCh38-loftee-gcloud.json --no_maf
+

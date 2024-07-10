@@ -26,7 +26,7 @@ if __name__ == "__main__":
     if args.vcf.endswith(".mt"):
         mt = hl.read_matrix_table(args.outfile + ".mt")
     else:
-        mt = hl.import_vcf(args.vcf,force_bgz=True, reference_genome=args.ref_genome)
+        mt = hl.import_vcf(args.vcf,force_bgz=True, reference_genome=args.ref_genome, drop_samples=True)
         mt = mt.filter_rows(mt.alleles[1] != '*')
         mt = hl.vep(mt,args.vep_conf)
         mt.write(args.outfile + ".mt", overwrite=args.overwrite )
