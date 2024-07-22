@@ -367,40 +367,44 @@ task add_gnomad {
 
                 #genome
                 while gen_ref.has_lines and gen_ref.chrom < chrom or ( gen_ref.chrom == chrom and gen_ref.pos < pos):
-                    gen_ref.line = gen_ref.fp.readline().rstrip('\r\n').split('\t')
-                    try:
+                    line_temp = gen_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
+                        gen_ref.has_lines = False
+                    else:
+                        gen_ref.line = line_temp.split('\t')
                         gen_ref.pos = int(gen_ref.line[gen_ref.h_idx["POS"]])
                         gen_ref.chrom = format_chrom(gen_ref.line[gen_ref.h_idx["#CHROM"]])
-                    except ValueError:
-                        gen_ref.has_lines = False
                     
                 #exome
                 while exo_ref.has_lines and exo_ref.chrom < chrom or (exo_ref.chrom == chrom and exo_ref.pos < pos):
-                    exo_ref.line = exo_ref.fp.readline().rstrip('\r\n').split('\t')
-                    try:
+                    line_temp = exo_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
+                        exo_ref.has_lines = False
+                    else:
+                        exo_ref.line = line_temp.split('\t')
                         exo_ref.pos = int(exo_ref.line[exo_ref.h_idx["POS"]])
                         exo_ref.chrom = format_chrom(exo_ref.line[exo_ref.h_idx["#CHROM"]])
-                    except ValueError:
-                        exo_ref.has_lines = False
                 
                 #drain all lines with same chrom & pos to gen_vars
                 while gen_ref.has_lines and ( gen_ref.chrom == chrom and gen_ref.pos == pos ):
                     gen_vars.append(gen_ref.line)
-                    gen_ref.line = gen_ref.fp.readline().rstrip("\r\n").split('\t')
-                    try:
-                        gen_ref.chrom = format_chrom(gen_ref.line[gen_ref.h_idx['#CHROM']])
-                        gen_ref.pos = int(gen_ref.line[gen_ref.h_idx['POS']])
-                    except ValueError:
+                    line_temp = gen_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
                         gen_ref.has_lines = False
+                    else:
+                        gen_ref.line = line_temp.split('\t')
+                        gen_ref.pos = int(gen_ref.line[gen_ref.h_idx["POS"]])
+                        gen_ref.chrom = format_chrom(gen_ref.line[gen_ref.h_idx["#CHROM"]])
                 
                 while exo_ref.has_lines and ( exo_ref.chrom == chrom and exo_ref.pos == pos ):
                     exo_vars.append(exo_ref.line)
-                    exo_ref.line = exo_ref.fp.readline().rstrip("\r\n").split('\t')
-                    try:
-                        exo_ref.chrom = format_chrom(exo_ref.line[exo_ref.h_idx['#CHROM']])
-                        exo_ref.pos = int(exo_ref.line[exo_ref.h_idx['POS']])
-                    except ValueError:
+                    line_temp = exo_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
                         exo_ref.has_lines = False
+                    else:
+                        exo_ref.line = line_temp.split('\t')
+                        exo_ref.pos = int(exo_ref.line[exo_ref.h_idx["POS"]])
+                        exo_ref.chrom = format_chrom(exo_ref.line[exo_ref.h_idx["#CHROM"]])
 
                 #if the chrom and pos are the same, we try to match the variants. Else, we reset the respective {gen,exo}_vars
                 gen_values = ["NA"]*len(genome_cols)
