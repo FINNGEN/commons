@@ -18,6 +18,7 @@ task join_annot {
 
 	command <<<
 		set -eux
+
 		#save headercheck to file
 		cat > headercheck.awk <<'CODE'
 		{
@@ -35,35 +36,40 @@ task join_annot {
 		}
 		CODE
 
+        #helper function
+        body ()
+        {
+            IFS= read -r header;
+            printf '%s\n' "$header";
+            "$@"
+        }
+
+        awk 'BEGIN{FS=OFS="\t"} NR==1 { for(i=1;i<=NF;i++) sub(/_chr1$/, "", $i); print } FNR>1' ${sep=" " files} | bgzip > annotated_variants.gz.tmp
+
 		#if there are no external annots, then just simply concat files
-		if [[ -z "${external_annot}" ]]; then
-			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants.gz
-		else
-			#else sort VEP and annotation files in similar order, then join
-			
+		if [[ ! -z "${external_annot}" ]]; then
 			#headercheck: check that the column is in header, else abort with error 1
-			vep_varcol=$(zcat ${external_annot} |head -n1|awk -v value="variant" -F "\t" -f headercheck.awk)
-			vep_conscol=$(zcat ${external_annot}|head -n1|awk -v value="most_severe" -F "\t" -f headercheck.awk )
-			vep_genecol=$(zcat ${external_annot}|head -n1|awk -v value="gene_most_severe" -F "\t" -f headercheck.awk)
-			cat <(zcat ${external_annot}|head -n1|cut -f $vep_varcol,$vep_conscol,$vep_genecol) <(zcat ${external_annot}|cut -f $vep_varcol,$vep_conscol,$vep_genecol|sort -k 1b,1)|bgzip > sorted_vep.gz
+			vep_varcol=$(zcat ${external_annot} | head -n1 | awk -v value="variant" -F "\t" -f headercheck.awk)
+			vep_conscol=$(zcat ${external_annot}| head -n1 | awk -v value="most_severe" -F "\t" -f headercheck.awk )
+			vep_genecol=$(zcat ${external_annot}| head -n1 | awk -v value="gene_most_severe" -F "\t" -f headercheck.awk)
+
+			zcat ${external_annot} | cut -f $vep_varcol,$vep_conscol,$vep_genecol | body sort -V -k 1,1 -T ./ | bgzip > sorted_vep.gz
 			#sort annotation
-			cat <(head -n 1 ${files[0]}) <(awk 'FNR>1' ${sep=" " files}) | bgzip > annotated_variants_1.gz
-			cat <(zcat annotated_variants_1.gz|head -n1)  <(zcat annotated_variants_1.gz|tail -n+2|sort  -k 1b,1 -T ./) |bgzip  > sorted_annotated.gz
+			zcat annotated_variants.gz.tmp | body sort -V -k 1,1 -T ./ | bgzip  > sorted_annotated.gz
 			#join
-			join -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz)|sort -V -k1,1 -T ./ |bgzip  > annotated_variants.gz
+			join --nocheck-order -t $'\t' -1 1 -2 1 -e "NA" --header -a 1 <(zcat sorted_annotated.gz) <(zcat sorted_vep.gz) | bgzip > annotated_variants.gz
+    else
+            mv annotated_variants.gz.tmp annotated_variants.gz
 		fi
 
 		tabix -b 3 -e 3 -s 2 annotated_variants.gz
 
 	>>>
 
-
-
 	output {
 		File out="annotated_variants.gz"
 		File index="annotated_variants.gz.tbi"
 	}
-
 
 }
 
@@ -186,7 +192,7 @@ task add_rsids {
 	File ref_file
 	String docker
 
-    Int local_disk = (ceil(size(annotation_file, "G")) + ceil(size(ref_file, "G"))) * 2
+    Int local_disk = (ceil(size(annotation_file, "G")) + ceil(size(ref_file, "G"))) * 3
 
     command <<<
 
@@ -269,11 +275,11 @@ task add_rsids {
 
     runtime {
         docker: "${docker}"
-        cpu: "1"
-        memory: "4 GB"
+        cpu: "2"
+        memory: "8 GB"
         disks: "local-disk ${local_disk} HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
-        preemptible: 2
+        preemptible: 0
         noAddress: true
     }
 
@@ -287,7 +293,7 @@ task add_gnomad {
     Array[String] exome_cols
     Array[String] genome_cols
 
-    Int local_disk = (ceil(size(annotation_file, "G")) + ceil(size(gnomad_genomes, "G")) + ceil(size(gnomad_exomes, "G"))) * 2
+    Int local_disk = (ceil(size(annotation_file, "G")) + ceil(size(gnomad_genomes, "G")) + ceil(size(gnomad_exomes, "G"))) * 3
 
 	String docker
 
@@ -309,6 +315,10 @@ task add_gnomad {
                 self.header = self.line.rstrip('\r\n').split('\t')
                 self.h_idx = {h:i for i,h in enumerate(self.line.rstrip('\r\n').split('\t'))}
                 self.has_lines = True
+                self.has_b37_coords = 'CHROM_37' in self.header
+
+        def format_chrom(chr: str):
+            return int(chr.replace("chr", "").replace("X", "23").replace("Y", "24").replace("M", "25").replace("MT", "25"))
 
         fp_genome = gzip.open('${gnomad_genomes}', 'rt')
         fp_exome = gzip.open('${gnomad_exomes}', 'rt')
@@ -318,6 +328,9 @@ task add_gnomad {
 
         exome_cols = ["${sep='\",\"' exome_cols}"]
         genome_cols = ["${sep='\",\"' genome_cols}"]
+
+        assert all([col in gen_ref.header for col in genome_cols]), "All given exome columns not found from exome header"
+        assert all([col in exo_ref.header for col in exome_cols]), "All given exome columns not found from exome header"
 
         exome_cols_headernames = [f"EXOME_{val}" for val in exome_cols]
         genome_cols_headernames = [f"GENOME_{val}" for val in genome_cols]
@@ -330,7 +343,7 @@ task add_gnomad {
             h_idx = {h:i for i,h in enumerate(header.split('\t'))}
             ex_head = '\t'.join(exome_cols_headernames)
             gen_head = '\t'.join(genome_cols_headernames)
-            out_header = f"{header}\tb37_coord\t{ex_head}\t{gen_head}"
+            out_header = f"{header}\tb37_coord\t{ex_head}\t{gen_head}" if gen_ref.has_b37_coords or exo_ref.has_b37_coords else f"{header}\t{ex_head}\t{gen_head}"
             print(out_header)
 
             #create vars for each of the gen/exomes
@@ -339,60 +352,64 @@ task add_gnomad {
             for line in f:
                 oline = line.rstrip("\r\n")
                 s = oline.split('\t')
-                chrom = int(s[h_idx['chr']])
+                chrom = format_chrom(s[h_idx['chr']])
                 pos = int(s[h_idx['pos']])
                 ref = s[h_idx['ref']]
                 alt = s[h_idx['alt']]
                 #check if gen and exo vars have different c:p than variant. If yes, empty them.
                 if gen_vars:
-                    if int(gen_vars[0][gen_ref.h_idx['#CHROM']]) != chrom or int(gen_vars[0][gen_ref.h_idx['POS']]) != pos:
+                    if format_chrom(gen_vars[0][gen_ref.h_idx['#CHROM']]) != chrom or int(gen_vars[0][gen_ref.h_idx['POS']]) != pos:
                         gen_vars = []
 
                 if exo_vars:
-                    if int(exo_vars[0][exo_ref.h_idx['#CHROM']]) != chrom or int(exo_vars[0][exo_ref.h_idx['POS']]) != pos:
+                    if format_chrom(exo_vars[0][exo_ref.h_idx['#CHROM']]) != chrom or int(exo_vars[0][exo_ref.h_idx['POS']]) != pos:
                         exo_vars = []
 
                 #genome
                 while gen_ref.has_lines and gen_ref.chrom < chrom or ( gen_ref.chrom == chrom and gen_ref.pos < pos):
-                    gen_ref.line = gen_ref.fp.readline().rstrip('\r\n').split('\t')
-                    try:
-                        gen_ref.pos = int(gen_ref.line[gen_ref.h_idx["POS"]])
-                        gen_ref.chrom = int(gen_ref.line[gen_ref.h_idx["#CHROM"]])
-                    except ValueError:
+                    line_temp = gen_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
                         gen_ref.has_lines = False
+                    else:
+                        gen_ref.line = line_temp.split('\t')
+                        gen_ref.pos = int(gen_ref.line[gen_ref.h_idx["POS"]])
+                        gen_ref.chrom = format_chrom(gen_ref.line[gen_ref.h_idx["#CHROM"]])
                     
                 #exome
                 while exo_ref.has_lines and exo_ref.chrom < chrom or (exo_ref.chrom == chrom and exo_ref.pos < pos):
-                    exo_ref.line = exo_ref.fp.readline().rstrip('\r\n').split('\t')
-                    try:
-                        exo_ref.pos = int(exo_ref.line[exo_ref.h_idx["POS"]])
-                        exo_ref.chrom = int(exo_ref.line[exo_ref.h_idx["#CHROM"]])
-                    except ValueError:
+                    line_temp = exo_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
                         exo_ref.has_lines = False
+                    else:
+                        exo_ref.line = line_temp.split('\t')
+                        exo_ref.pos = int(exo_ref.line[exo_ref.h_idx["POS"]])
+                        exo_ref.chrom = format_chrom(exo_ref.line[exo_ref.h_idx["#CHROM"]])
                 
                 #drain all lines with same chrom & pos to gen_vars
                 while gen_ref.has_lines and ( gen_ref.chrom == chrom and gen_ref.pos == pos ):
                     gen_vars.append(gen_ref.line)
-                    gen_ref.line = gen_ref.fp.readline().rstrip("\r\n").split('\t')
-                    try:
-                        gen_ref.chrom = int(gen_ref.line[gen_ref.h_idx['#CHROM']])
-                        gen_ref.pos = int(gen_ref.line[gen_ref.h_idx['POS']])
-                    except ValueError:
+                    line_temp = gen_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
                         gen_ref.has_lines = False
+                    else:
+                        gen_ref.line = line_temp.split('\t')
+                        gen_ref.pos = int(gen_ref.line[gen_ref.h_idx["POS"]])
+                        gen_ref.chrom = format_chrom(gen_ref.line[gen_ref.h_idx["#CHROM"]])
                 
                 while exo_ref.has_lines and ( exo_ref.chrom == chrom and exo_ref.pos == pos ):
                     exo_vars.append(exo_ref.line)
-                    exo_ref.line = exo_ref.fp.readline().rstrip("\r\n").split('\t')
-                    try:
-                        exo_ref.chrom = int(exo_ref.line[exo_ref.h_idx['#CHROM']])
-                        exo_ref.pos = int(exo_ref.line[exo_ref.h_idx['POS']])
-                    except ValueError:
+                    line_temp = exo_ref.fp.readline().rstrip('\r\n')
+                    if line_temp == "":
                         exo_ref.has_lines = False
+                    else:
+                        exo_ref.line = line_temp.split('\t')
+                        exo_ref.pos = int(exo_ref.line[exo_ref.h_idx["POS"]])
+                        exo_ref.chrom = format_chrom(exo_ref.line[exo_ref.h_idx["#CHROM"]])
 
                 #if the chrom and pos are the same, we try to match the variants. Else, we reset the respective {gen,exo}_vars
                 gen_values = ["NA"]*len(genome_cols)
                 if gen_vars:
-                    if chrom == int(gen_vars[0][gen_ref.h_idx['#CHROM']]) and pos == int(gen_vars[0][gen_ref.h_idx['POS']]):
+                    if chrom == format_chrom(gen_vars[0][gen_ref.h_idx['#CHROM']]) and pos == int(gen_vars[0][gen_ref.h_idx['POS']]):
                         for genvar in gen_vars:
                             match = (ref == genvar[gen_ref.h_idx['REF']]) and (alt == genvar[gen_ref.h_idx['ALT']])
                             if match:
@@ -403,7 +420,7 @@ task add_gnomad {
 
                 exo_values = ["NA"]*len(exome_cols)
                 if exo_vars:
-                    if chrom == int(exo_vars[0][exo_ref.h_idx['#CHROM']]) and pos == int(exo_vars[0][exo_ref.h_idx['POS']]):
+                    if chrom == format_chrom(exo_vars[0][exo_ref.h_idx['#CHROM']]) and pos == int(exo_vars[0][exo_ref.h_idx['POS']]):
                         for exvar in exo_vars:
                             match = (ref == exvar[exo_ref.h_idx['REF']]) and (alt == exvar[exo_ref.h_idx['ALT']])
                             if match:
@@ -416,20 +433,22 @@ task add_gnomad {
                 gevals = '\t'.join(gen_values)
                 #b37 coord
                 b37_coord = "NA"
-                for exo in exo_vars:
-                    match = (chrom == int(exo[exo_ref.h_idx['#CHROM']]) ) and (pos == int(exo[exo_ref.h_idx['POS']]) ) and (ref == exo[exo_ref.h_idx['REF']]) and (alt == exo[exo_ref.h_idx['ALT']])
-                    if match:
-                        #CHROM_37	POS_37	REF_37	ALT_37
-                        b37_coord = f"{exo[exo_ref.h_idx['CHROM_37']]}:{exo[exo_ref.h_idx['POS_37']]}:{exo[exo_ref.h_idx['REF_37']]}:{exo[exo_ref.h_idx['ALT_37']]}"
-                        break
-                for geno in gen_vars:
-                    if b37_coord != "NA":
-                        break
-                    match = (chrom == int(geno[gen_ref.h_idx['#CHROM']]) ) and (pos == int(geno[gen_ref.h_idx['POS']]) ) and (ref == geno[gen_ref.h_idx['REF']]) and (alt == geno[gen_ref.h_idx['ALT']])
-                    if match:
-                        b37_coord = f"{geno[gen_ref.h_idx['CHROM_37']]}:{geno[gen_ref.h_idx['POS_37']]}:{geno[gen_ref.h_idx['REF_37']]}:{geno[gen_ref.h_idx['ALT_37']]}"
-                        break
-                outline = f"{oline}\t{b37_coord}\t{exvals}\t{gevals}"
+                if exo_ref.has_b37_coords:
+                    for exo in exo_vars:
+                        match = (chrom == format_chrom(exo[exo_ref.h_idx['#CHROM']]) ) and (pos == int(exo[exo_ref.h_idx['POS']]) ) and (ref == exo[exo_ref.h_idx['REF']]) and (alt == exo[exo_ref.h_idx['ALT']])
+                        if match:
+                            #CHROM_37	POS_37	REF_37	ALT_37
+                            b37_coord = f"{exo[exo_ref.h_idx['CHROM_37']]}:{exo[exo_ref.h_idx['POS_37']]}:{exo[exo_ref.h_idx['REF_37']]}:{exo[exo_ref.h_idx['ALT_37']]}"
+                            break
+                if gen_ref.has_b37_coords:
+                    for geno in gen_vars:
+                        if b37_coord != "NA":
+                            break
+                        match = (chrom == format_chrom(geno[gen_ref.h_idx['#CHROM']]) ) and (pos == int(geno[gen_ref.h_idx['POS']]) ) and (ref == geno[gen_ref.h_idx['REF']]) and (alt == geno[gen_ref.h_idx['ALT']])
+                        if match:
+                            b37_coord = f"{geno[gen_ref.h_idx['CHROM_37']]}:{geno[gen_ref.h_idx['POS_37']]}:{geno[gen_ref.h_idx['REF_37']]}:{geno[gen_ref.h_idx['ALT_37']]}"
+                            break
+                outline = f"{oline}\t{b37_coord}\t{exvals}\t{gevals}" if gen_ref.has_b37_coords or exo_ref.has_b37_coords else f"{oline}\t{exvals}\t{gevals}"
                 print(outline)
         gen_ref.fp.close()
         exo_ref.fp.close()
@@ -444,11 +463,11 @@ task add_gnomad {
 	}
 	runtime {
         docker: "${docker}"
-        cpu: "1"
-        memory: "4 GB"
+        cpu: "2"
+        memory: "8 GB"
         disks: "local-disk ${local_disk} HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
-        preemptible: 2
+        preemptible: 0
         noAddress: true
     }
 }
