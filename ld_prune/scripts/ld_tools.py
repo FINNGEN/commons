@@ -13,11 +13,15 @@ import argparse
 
 LD_DISPL_DECIMALS = 3
 
+class VariantNotFoundException(Exception):
+    pass
+
+
 def get_region_mapping(chrom:str,pos:str,ref:str,alt:str, mapfile:str, window:int):
     """
     Gets tomahawk position for the query variant and a tomahawk_position-to-variant mapping for variants in the given panel within the given window
     Returns a tuple (tomahawk chr:pos, dict from tomahawk chr:pos to chr:pos:ref:alt)
-    Raises if variant not found
+    Raises VariantNotFoundException if variant not found
     """
     twk2cpra = {} # mapping from tomahawk positions chr:pos to actual variants chr:pos:ref:alt
     twk = None # tomahawk position of query variant
@@ -32,7 +36,7 @@ def get_region_mapping(chrom:str,pos:str,ref:str,alt:str, mapfile:str, window:in
             twk = s[3]
         twk2cpra[s[3]] = s[2]
     if twk is None:
-        raise Exception({'variant not found: ' + cpra})
+        raise VariantNotFoundException({'variant not found: ' + cpra})
     
     return (twk, twk2cpra)
 
@@ -83,9 +87,14 @@ def get_ld_vars(chrom:str, pos:int, ref:str, alt:str, r2:float, ld_w:int) -> Dic
 
 def get_ld_vars_tomahawk(chrom, pos, ref, alt, r2:float, ld_w:int,tomafile:str, mapfile:str,
                          tomahawk_threads=None ,limit_to_vars:dict[str,str]=None) -> Dict[str,str]:
+    """
+        Gets LD data for the given variant using tomahawk. 
+        Throws VariantNotFoundException if variant not found
+    """
 
     if(chrom.startswith("chr")):
         chrom = chrom.replace("chr","")
+
 
     map = get_region_mapping(chrom,pos, ref, alt,mapfile,ld_w)      
 

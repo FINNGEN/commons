@@ -14,7 +14,7 @@ from io import TextIOBase
 from typing import Tuple, List, OrderedDict, Iterator
 from scipy.stats import chi2
 import ld_tools
-    import subprocess
+import subprocess
 
 import math
 
@@ -241,7 +241,7 @@ class Cluster(object):
 
 def prune_cluster(cl:Cluster, r2:float, ld_interface,clump_expected_chisq:float=None,
                     clump_expected_chisq_filter_af_col:str=None, af_threshold_chi_prune:float=None, 
-                    fixed_ld_search_width=None, max_ld_width:int=None) ->List[Tuple[Hit,List[Hit]]]:
+                    fixed_ld_search_width=None, max_ld_width:int=None, ignore_variant_not_found=False) ->List[Tuple[Hit,List[Hit]]]:
     '''
         Takes cluster and prunes by LD of Hits in cluster, retaining the top in in the clustered
         Args:
@@ -301,8 +301,14 @@ def prune_cluster(cl:Cluster, r2:float, ld_interface,clump_expected_chisq:float=
             #search_r2 = 5/chisqtop
             # we need all ld variants for chisq clumping as we are later checking if eligible based on target variant AF.
             search_r2=0
-            
-        ld =ld_interface(top.chrom, top.pos, top.ref, top.alt, search_r2,width)
+        
+        try:
+            ld =ld_interface(top.chrom, top.pos, top.ref, top.alt, search_r2,width)
+        except Exception as e:
+            print(f"Error getting LD for {top.varid} {e}")
+            if (ignore_variant_not_found):
+                print(f"Ignoring variant not found error for {top.varid}")
+                continue
         
         varid = ":".join( [top.chrom,str(top.pos),top.ref,top.alt] )
         ldvars = [ ("chr" + ldv["variation2"].replace(":","_"), float(ldv["r2"])) for ldv in ld if ldv["variation2"]!=varid]
@@ -342,6 +348,9 @@ if __name__ == '__main__':
     parser.add_argument('-refcol', default="ref")
     parser.add_argument('-altcol', default="alt")
     parser.add_argument('-prune_column_list', default="phenocode", help="Comma separated list of column names that will be printed out in the last column where pruned endpoints are listed")
+
+    parser.add_argument('-ignore_variant_not_found', default=False, action='store_true', help="""Ignore variant not found errors in LD store
+                         and continue without clustering that variant""")
 
     parser.add_argument('-sort_first', action='store_true', help="Sort input file by chrom and pos before running")
     ## 
@@ -406,7 +415,7 @@ if __name__ == '__main__':
                     pruned = prune_cluster(cluster, args.ld,ld_interface=ld_interface,
                         clump_expected_chisq=args.clump_expected_chisq, clump_expected_chisq_filter_af_col=args.clump_expected_chisq_filter_af_col,
                         af_threshold_chi_prune=args.clump_expected_chisq_af, 
-                        fixed_ld_search_width=args.fixed_ld_search_width, max_ld_width=args.max_ld_width)
+                        fixed_ld_search_width=args.fixed_ld_search_width, max_ld_width=args.max_ld_width, ignore_variant_not_found=args.ignore_variant_not_found)
                     print(f'#### Cluster pruned to {len(pruned)} hits')
                     write_cluster(pruned,pruned_cols, out)
                     cluster.clear()

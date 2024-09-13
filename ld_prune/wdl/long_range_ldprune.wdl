@@ -64,7 +64,7 @@ workflow long_range_prune {
             -pcol pval  -local_tomahawk_LD -tomahawk_template ${new_toma_pattern}  \
             -tomahawk_mapfile ${tw_map}
         
-        ld_prune_lines.py ${fmap} ${fmap}.dynclump -ld_w ${ld_width} \
+        ld_prune_lines.py ${fmap} ${base}.dynclump -ld_w ${ld_width} \
         -clump_expected_chisq ${clump_expected_chisq}  -clump_expected_chisq_af ${clump_expected_chisq_af}  -pcol pval \
         -ld_source sisu42 -chromcol \
         'chrom' -poscol pos -refcol ref  -altcol alt -prune_column_list locus_id,phenotype,lead_beta,pval \
