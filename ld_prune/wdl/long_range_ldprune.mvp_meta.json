@@ -1,0 +1,10 @@
+{
+    "long_range_prune.fmapfile": "gs://fg-mvp/meta_analysis_results/all/autoreporting/combined_group_reports_file.loc",
+    "long_range_prune.tomahawk_pattern": "gs://finngen-imputation-panel/sisu4.2/tomahawk/v4.2.chr{CHR}_phased_SNPID.twk",
+    "long_range_prune.path_to_tw_map": "gs://finngen-imputation-panel/sisu4.2/tomahawk/sisu4.2_twk_mapping.tsv.gz",
+    "long_range_prune.split_fmap.docker": "europe-docker.pkg.dev/finngen-refinery-dev/eu.gcr.io/bioinformatics:0.8.2",
+    "long_range_prune.ld_prune.ld_width": 20000000,
+    "long_range_prune.ld_prune.clump_ld": 0.6,
+    "long_range_prune.ld_prune.enable_fuse": false,
+    "long_range_prune.ld_prune.docker": "eu.gcr.io/finngen-refinery-dev/ld_prune:latest"
+}
