@@ -34,13 +34,14 @@ workflow long_range_prune {
     input {
         File fmap
         String docker
+        String chromcol = "chrom"
     }
 
     String base = basename(fmap)
 
     command <<<
 
-        zcat -f ~{fmap} | awk 'BEGIN{FS=OFS="\t"} FNR==1 {header=$0; for(i=1;i<=NF;i++) {h[$i]=i} next} {out="~{base}.chr"$h["chrom"]".tsv"; if (!seen[$h["chrom"]]++) print header > out; print > out}'
+        zcat -f ~{fmap} | awk 'BEGIN{FS=OFS="\t"} FNR==1 {header=$0; for(i=1;i<=NF;i++) {h[$i]=i} next} {out="~{base}.chr"$h["~{chromcol}"]".tsv"; if (!seen[$h["~{chromcol}"]]++) print header > out; print > out}'
 
     >>>
 
