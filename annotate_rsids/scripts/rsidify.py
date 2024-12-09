@@ -102,7 +102,8 @@ if __name__=="__main__":
         ####
         keys_not_in_header =  [a not in h_idx.keys() for a in [cpra.c,cpra.p,cpra.r,cpra.a]]
         if any(keys_not_in_header):
-            msg = f"ERROR: columns {keys_not_in_header} not in file header"
+            missing_columns = [a for a in [cpra.c,cpra.p,cpra.r,cpra.a] if a not in h_idx.keys()]
+            msg = f"ERROR: columns {missing_columns} not in file header"
             print(msg,file=sys.stderr)
             raise KeyError(msg)
 
