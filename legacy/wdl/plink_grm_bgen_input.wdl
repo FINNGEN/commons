@@ -8,6 +8,7 @@ task filter_prune {
     Float geno_missing
     Float maf
     String ld
+    String genome_build = "hg38"
 
     File samplefile = bgenfile + ".sample"
     String out = basename(sub(bgenfile, ".bgen$", "")) + ".filtered"
@@ -16,13 +17,17 @@ task filter_prune {
     Int local_disk = ceil(size(bgenfile, "G") * 4)
 
     command <<<
+
+        sed 's/^chr//;s/^/chr/;s/^chr23/chrX/' ${include_variants} > include_variants.txt
+
         plink2 \
         --memory 100000 \
         --allow-extra-chr \
         --snps-only \
         --bgen ${bgenfile} ref-first \
         --sample ${samplefile} \
-        --extract ${include_variants} \
+        --split-par ${genome_build} \
+        --extract include_variants.txt \
         --keep ${include_samples} \
         --geno ${geno_missing} \
         --maf ${maf} \

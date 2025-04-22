@@ -515,7 +515,7 @@ workflow scrape_annots {
 
 	output {
 		File annotation = add_gnomad.gnomad_joined_out
-		File annotatation_index = add_gnomad.gnomad_joined_out_tbi
+		File annotation_index = add_gnomad.gnomad_joined_out_tbi
 		File annotation_small = small.small_out
 		File annotation_small_index = small.small_index
 	}
