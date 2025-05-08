@@ -51,10 +51,9 @@ if __name__=="__main__":
     ap.add_argument("file")
     ap.add_argument("--reference",help="dbSNP reference VCF",required=True)
     ap.add_argument("--out",help="Output file path (not compressed). If output is not specified, output will be written to stdout.")
-    ap.add_argument("-c","--chrom",required=True,help="Input file chromosome column")
-    ap.add_argument("-p","--pos",required=True,help="Input file position column")
-    ap.add_argument("-r","--ref",required=True,help="Input file reference allele column")
-    ap.add_argument("-a","--alt",required=True,help="Input file alternate allele column")
+    cpra_select = ap.add_mutually_exclusive_group(required=True)
+    cpra_select.add_argument("--cpra",nargs=4,help="chromosome, position, reference & alternate allele column names")
+    cpra_select.add_argument("--varid",nargs=2,help="variant id and separator inside variant id, e.g. 'variant' ':' ")
     ap.add_argument("-s","--sep",help="File separator in input file",default="\t")
     args = ap.parse_args()
 
@@ -65,8 +64,12 @@ if __name__=="__main__":
         out_write = OUTPUT.write
     else:
         out_write = sys.stdout.write
-
-    cpra = CPRA(args.chrom,args.pos,args.ref,args.alt)
+    if args.cpra:
+        cpra = CPRA(args.cpra[0],args.cpra[1],args.cpra[2],args.cpra[3])
+    else:
+        cpra=False
+        varid_col = args.varid[0]
+        varid_sep = args.varid[1]
     SEP=args.sep
     OUT = args.out
     REF = args.reference
@@ -100,12 +103,19 @@ if __name__=="__main__":
         ####
         # Check if header contains all columns 
         ####
-        keys_not_in_header =  [a not in h_idx.keys() for a in [cpra.c,cpra.p,cpra.r,cpra.a]]
-        if any(keys_not_in_header):
-            missing_columns = [a for a in [cpra.c,cpra.p,cpra.r,cpra.a] if a not in h_idx.keys()]
-            msg = f"ERROR: columns {missing_columns} not in file header"
-            print(msg,file=sys.stderr)
-            raise KeyError(msg)
+        if cpra:
+            keys_not_in_header =  [a not in h_idx.keys() for a in [cpra.c,cpra.p,cpra.r,cpra.a]]
+            if any(keys_not_in_header):
+                missing_columns = [a for a in [cpra.c,cpra.p,cpra.r,cpra.a] if a not in h_idx.keys()]
+                msg = f"ERROR: columns {missing_columns} not in file header"
+                print(msg,file=sys.stderr)
+                raise KeyError(msg)
+        else:
+            varid_not_in_header = varid_col not in h_idx.keys()
+            if varid_not_in_header:
+                msg = f"ERROR: variant identifier {varid_col} not in file header!"
+                print(msg,file=sys.stderr)
+                raise KeyError(msg)
 
         out_write(f"{header}{SEP}rsid\n")
 
@@ -120,17 +130,30 @@ if __name__=="__main__":
             s = line.split(SEP)
             if line_len != len(s):
                 raise ValueError(f"Error on input line {line_idx+1}:Input file line had different amount of columns ({len(s)}) than the header ({line_len}). This is very likely an error on the input gile (e.g. fields containing line separator). Line: '{line}'. Header:'{header}'")
-            try:
-                chrom = int(CHR_MAP[s[h_idx[cpra.c]]])
-                pos = int(s[h_idx[cpra.p]])
-                ref = s[h_idx[cpra.r]]
-                alt = s[h_idx[cpra.a]]
-            except ValueError:
-                print(f"Error on input line {line_idx+1}:Chromosome or position was not a number or coercable to number. Chromosome:{s[h_idx[cpra.c]]} Position:{s[h_idx[cpra.p]]} ",file= sys.stderr)
-                raise
-            except KeyError:
-                print(f"Error on input line {line_idx+1}:Chromosome was not recognized. Chromosome: {s[h_idx[cpra.c]]}  Allowed values are numerical chromosomes (1-25) with or without 'chr' prefix, and X,Y,M,MT lower or uppercase. ",file=sys.stderr)
-                raise
+        
+            if cpra:
+                try:
+                    chrom = int(CHR_MAP[s[h_idx[cpra.c]]])
+                    pos = int(s[h_idx[cpra.p]])
+                    ref = s[h_idx[cpra.r]]
+                    alt = s[h_idx[cpra.a]]
+                except ValueError:
+                    print(f"Error on input line {line_idx+1}:Chromosome or position was not a number or coercable to number. Chromosome:{s[h_idx[cpra.c]]} Position:{s[h_idx[cpra.p]]} ",file= sys.stderr)
+                    raise
+                except KeyError:
+                    print(f"Error on input line {line_idx+1}:Chromosome was not recognized. Chromosome: {s[h_idx[cpra.c]]}  Allowed values are numerical chromosomes (1-25) with or without 'chr' prefix, and X,Y,M,MT lower or uppercase. ",file=sys.stderr)
+                    raise
+            
+            else:
+                try:
+                    v_id = s[h_idx[varid_col]].split(varid_sep)
+                    chrom = CHR_MAP[v_id[0].replace("chr","")]
+                    pos = int(v_id[1])
+                    ref = v_id[2]
+                    alt = v_id[3]
+                except KeyError:
+                    print(f'Error on input line {line_idx+1}: Chromosome or position was not number of coercable to number. Variantid: {s[h_idx[varid_col]]} extracted variant: {v_id[0].replace("chr","")} extracted position: {v_id[1]}')
+                    raise
             ####
             # Check that chrom,pos are in order
             ####
