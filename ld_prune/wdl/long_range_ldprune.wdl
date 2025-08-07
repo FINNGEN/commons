@@ -24,7 +24,8 @@ workflow long_range_prune {
 
     String toma_bucket = sub(sub(tomahawk_pattern, "^gs://", ""), "/.+$", "")
     String mountpoint = "/cromwell_root/gcsfuse/" + toma_bucket
-    String new_toma_pattern = sub(tomahawk_pattern,"^gs://" + toma_bucket, mountpoint)
+    String new_toma_pattern_fuse = sub(tomahawk_pattern,"^gs://" + toma_bucket, mountpoint)
+    String new_toma_pattern_nofuse = sub(tomahawk_pattern, "^gs://.*/", mountpoint + "/")
 
     Int ld_width=20000000
     Int clump_expected_chisq=5
@@ -44,11 +45,13 @@ workflow long_range_prune {
         then
             echo "mounting bucket ${toma_bucket} at ${mountpoint}"
             gcsfuse --debug_fuse --debug_fuse_errors --implicit-dirs ${toma_bucket} ${mountpoint}
+            new_toma_pattern_local="${new_toma_pattern_fuse}"
         else
             dir=$(dirname ${mountpoint})
             mkdir -p $dir
             echo gsutil -q cp $(echo ${tomahawk_pattern}| sed 's/{CHR}/*/') ${mountpoint}/
             gsutil -q cp $(echo ${tomahawk_pattern}| sed 's/{CHR}/*/') ${mountpoint}/
+            new_toma_pattern_local="${new_toma_pattern_nofuse}"
         fi
 
         echo "mounted bucket ${toma_bucket} at ${mountpoint}"
@@ -58,23 +61,23 @@ workflow long_range_prune {
         ls -latr /cromwell_root/gcsfuse/finngen-imputation-panel/sisu4.2/tomahawk/
 
         echo ld_prune_lines.py ${fmap} ${base}.dynclump -ld_w ${ld_width} \
-            -clump_expected_chisq ${clump_expected_chisq}  -clump_expected_chisq_af ${clump_expected_chisq_af}  -pcol pval \
-            -ld_source sisu42 -chromcol \
-            'chrom' -poscol pos -refcol ref  -altcol alt -prune_column_list locus_id,phenotype,lead_beta,pval \
-            -pcol pval  -local_tomahawk_LD -tomahawk_template ${new_toma_pattern}  \
-            -tomahawk_mapfile ${tw_map}
+            -clump_expected_chisq ${clump_expected_chisq}  -clump_expected_chisq_af ${clump_expected_chisq_af} \
+            -ld_source sisu42 -chromcol 'chrom' -poscol pos -refcol ref -altcol alt -pcol pval \
+            -prune_column_list locus_id,phenotype,lead_beta,pval \
+            -local_tomahawk_LD -tomahawk_template $new_toma_pattern_local  \
+            -tomahawk_mapfile ${tw_map} -sort_first
         
         ld_prune_lines.py ${fmap} ${base}.dynclump -ld_w ${ld_width} \
-        -clump_expected_chisq ${clump_expected_chisq}  -clump_expected_chisq_af ${clump_expected_chisq_af}  -pcol pval \
-        -ld_source sisu42 -chromcol \
-        'chrom' -poscol pos -refcol ref  -altcol alt -prune_column_list locus_id,phenotype,lead_beta,pval \
-        -pcol pval  -local_tomahawk_LD -tomahawk_template ${new_toma_pattern}  \
-        -tomahawk_mapfile ${tw_map} -sort_first
+            -clump_expected_chisq ${clump_expected_chisq}  -clump_expected_chisq_af ${clump_expected_chisq_af} \
+            -ld_source sisu42 -chromcol 'chrom' -poscol pos -refcol ref -altcol alt -pcol pval \
+            -prune_column_list locus_id,phenotype,lead_beta,pval \
+            -local_tomahawk_LD -tomahawk_template $new_toma_pattern_local  \
+            -tomahawk_mapfile ${tw_map} -sort_first
 
     >>>    
 
     runtime {
-        docker: "eu.gcr.io/finngen-refinery-dev/ld_prune:latest"
+        docker: "europe-west1-docker.pkg.dev/finngen-refinery-dev/fg-refinery-registry/ld_prune:latest"
         memory: "8 GB"
         cpu: "16"
         disks: "local-disk 20 HDD"
