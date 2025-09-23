@@ -1,0 +1,6 @@
+{
+    "filter_vcf_by_variants_to_bgen.vcf_files": "gs://r13-data/chip_analysis/annotation/r13_chip_vcfs",
+    "filter_vcf_by_variants_to_bgen.filter_to_bgen.variant_file": "gs://r13-data/chip_analysis/coding_vars_chip",
+    "filter_vcf_by_variants_to_bgen.filter_to_bgen.genofield": "GT",
+    "filter_vcf_by_variants_to_bgen.combine.outfile": "R13_chip_coding.bgen"
+}

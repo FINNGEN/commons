@@ -22,7 +22,7 @@ task filter_to_bgen {
     }
 
     runtime {
-        docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
+        docker: "europe-west1-docker.pkg.dev/finngen-refinery-dev/fg-refinery-registry/bioinformatics:1.0.2"
         cpu: 3
         memory: "2 GB"
         disks: "local-disk 300 HDD"
@@ -43,7 +43,7 @@ task combine {
     >>>
 
     runtime {
-        docker: "eu.gcr.io/finngen-refinery-dev/bioinformatics:0.8"
+        docker: "europe-west1-docker.pkg.dev/finngen-refinery-dev/fg-refinery-registry/bioinformatics:1.0.2"
         cpu: 1
         disks: "local-disk 200 HDD"
         zones: "europe-west1-b europe-west1-c europe-west1-d"
