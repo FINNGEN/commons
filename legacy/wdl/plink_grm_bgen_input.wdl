@@ -18,7 +18,7 @@ task filter_prune {
 
     command <<<
 
-        sed 's/^chr//;s/^/chr/;s/^chr23/chrX/' ${include_variants} > include_variants.txt
+        sed 's/^chr//;s/^/chr/;s/^chr23/chrX/;s/:/_/g' ${include_variants} > include_variants.txt
 
         plink2 \
         --memory 100000 \
