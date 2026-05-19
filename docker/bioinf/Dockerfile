@@ -6,9 +6,10 @@ LABEL maintainer="jkarjala@broadinstitute.org"
 ENV LC_ALL C.UTF-8
 ENV LANG C.UTF-8
 
-ARG HTSLIB_VER=1.20
-ARG BCFTOOLS_VER=1.20
-ARG R_VER=4.2.2
+ARG HTSLIB_VER=1.21.1
+ARG BCFTOOLS_VER=1.21.1
+ARG R_VER=4.2.3
+ARG DUCKDB_VER=1.4.4
 
 WORKDIR /tmp
 
@@ -17,7 +18,8 @@ RUN apt-get update && apt-get upgrade --yes
 RUN apt-get install vim emacs jq less datamash wget gawk curl lsb-core make gcc g++ g++-9 cmake gfortran libreadline6-dev \
     libz-dev libbz2-dev liblzma-dev zlib1g-dev libpcre2-dev libpcre3-dev libssl-dev libcurl4-openssl-dev \
     libopenblas-dev default-jre unzip bzip2 libboost-all-dev parallel \
-    libpng-dev libcairo2-dev python3-pip libxml2-dev --yes
+    libpng-dev libcairo2-dev python3-pip libxml2-dev libuv1-dev libharfbuzz-dev libfribidi-dev libfreetype6-dev \
+    libtiff5-dev libjpeg-dev libwebp-dev pkg-config --yes
 
 RUN curl -LO https://github.com/samtools/htslib/releases/download/${HTSLIB_VER}/htslib-${HTSLIB_VER}.tar.bz2 && \
     tar -xvjf htslib-${HTSLIB_VER}.tar.bz2 && cd htslib-${HTSLIB_VER} && \
@@ -43,16 +45,16 @@ RUN mkdir plink && cd plink && curl -O http://s3.amazonaws.com/plink1-assets/pli
     curl -O http://s3.amazonaws.com/plink2-assets/plink2_linux_avx2_latest.zip && \
     unzip plink2_linux_avx2_latest.zip && mv plink2 /usr/local/bin && cd .. && rm -rf plink
 
-RUN curl -O http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/liftOver && chmod a+x liftOver && mv liftOver /usr/local/bin && \
-    curl -O http://hgdownload.soe.ucsc.edu/goldenPath/hg19/liftOver/hg19ToHg38.over.chain.gz && \
-    curl -O http://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz && \
-    mkdir /liftover && mv *.chain.gz /liftover/
-
 RUN wget http://www.christianbenner.com/ldstore_v2.0_x86_64.tgz && \
     tar xzf ldstore_v2.0_x86_64.tgz && \
     cp ldstore_v2.0_x86_64/ldstore_v2.0_x86_64 /usr/local/bin/ && \
     chmod a+x /usr/local/bin/ldstore_v2.0_x86_64 && \
     rm -rf ldstore_v2.0_x86_64*
+
+RUN curl -L https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VER}/duckdb_cli-linux-amd64.zip -o duckdb.zip \
+    && unzip duckdb.zip -d /usr/local/bin \
+    && chmod +x /usr/local/bin/duckdb \
+    && rm duckdb.zip
 
 ENV CLOUDSDK_INSTALL_DIR /usr/local/gcloud/
 RUN curl -sSL https://sdk.cloud.google.com | bash
@@ -76,5 +78,8 @@ RUN apt-get remove default-jre --yes && apt autoremove --yes && apt-get clean
 ADD print_versions.sh print_packages.R /usr/local/bin/
 RUN chmod a+x /usr/local/bin/print_versions.sh /usr/local/bin/print_packages.R && \
     print_versions.sh
+
+# Cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 WORKDIR /
