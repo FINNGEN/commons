@@ -245,8 +245,17 @@ def progressBar(value, endvalue, bar_length=20):
 
 def load_pos_mapping(chrompos_map):
     '''
-    Loads the chrom_pos to ref/alt mapping for finngen
+    Loads the chrom_pos to ref/alt mapping for finngen. chrompos_map can
+    either be the raw tsv/tsv.gz mapping file (in which case a .pickle
+    sidecar is loaded if present, else generated) or an already pickled
+    dict (loaded directly).
     '''
+    if is_pickle_file(chrompos_map):
+        print('loading pickle dict directly -->', chrompos_map)
+        with open(chrompos_map,'rb') as i: pos_dict = pickle.load(i)
+        print('done.')
+        return pos_dict
+
     out_pickle = chrompos_map + '.pickle'
     if os.path.isfile(out_pickle):
         print('loading chrompos dict -->', out_pickle)
@@ -264,10 +273,28 @@ def load_pos_mapping(chrompos_map):
     print('done.')
     return pos_dict
 
+def is_pickle_file(fname):
+    '''
+    Detects whether a file is already a pickle, based on its magic byte
+    (pickle protocol >= 2, which is what pickle.HIGHEST_PROTOCOL produces here)
+    rather than its filename/extension.
+    '''
+    with open(fname,'rb') as i:
+        magic = i.read(2)
+    return magic[:1] == b'\x80'
+
 def load_rsid_mapping(rsid_map,inverse = False):
     '''
-    Loads the chrompos to rsid mapping
+    Loads the chrompos to rsid mapping. rsid_map can either be the raw
+    tsv/tsv.gz mapping file (in which case a .pickle sidecar is loaded if
+    present, else generated) or an already pickled dict (loaded directly).
     '''
+    if is_pickle_file(rsid_map):
+        print('loading pickle dict directly -->', rsid_map)
+        with open(rsid_map,'rb') as i: rsid_dict = pickle.load(i)
+        print('done.')
+        return rsid_dict
+
     out_pickle = os.path.join(rsid_map) + '.pickle'
     if inverse:
         out_pickle += '.chrompos'
