@@ -1,0 +1,15 @@
+{
+    "mac_filter_rsidify.sumstats_manifest": "gs://r14-data/regenie/pQTL/batch3/inputs/batch3_mac_filter_rsdify_input.tsv",
+    "mac_filter_rsidify.annotation": "gs://finngen-production-library-green/finngen_R14/finngen_R14_analysis_data/annotations/R14_annotated_variants_v0.small.gz",
+
+    "mac_filter_rsidify.mac_threshold": 30,
+    "mac_filter_rsidify.maf_threshold": 0.0001,
+
+    "mac_filter_rsidify.docker": "europe-west1-docker.pkg.dev/finngen-refinery-dev/fg-refinery-registry/mac-filter-rsidify:v2",
+
+    "mac_filter_rsidify.chrom_col": "#chrom",
+    "mac_filter_rsidify.pos_col": "pos",
+    "mac_filter_rsidify.ref_col": "ref",
+    "mac_filter_rsidify.alt_col": "alt",
+    "mac_filter_rsidify.af_col": "af_alt"
+}
